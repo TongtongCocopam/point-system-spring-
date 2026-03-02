@@ -16,6 +16,5 @@ public class UserBalance {
     private long balance;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
-    @GeneratedValue(strategy = GenerationType.UUID)
     private User user;
 }
