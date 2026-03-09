@@ -1,4 +1,4 @@
-package kongju.pointsystem.entity;
+package kongju.pointsystem.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
