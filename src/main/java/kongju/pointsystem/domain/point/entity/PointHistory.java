@@ -6,7 +6,7 @@ import kongju.pointsystem.domain.user.entity.User;
 import java.util.UUID;
 
 @Entity
-@Table(name = "point_historys")
+@Table(name = "point_histories")
 public class PointHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
