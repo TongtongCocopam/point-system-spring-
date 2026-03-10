@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 @Entity
+@Table(name = "point_details")
 public class PointDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
