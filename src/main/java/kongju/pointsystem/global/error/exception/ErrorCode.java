@@ -1,8 +1,9 @@
 package kongju.pointsystem.global.error.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@lombok.Getter
+@Getter
 public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "존재하지 않는 계정입니다"),
     BALANCE_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "P001", "포인트 잔액이 부족합니다"),
