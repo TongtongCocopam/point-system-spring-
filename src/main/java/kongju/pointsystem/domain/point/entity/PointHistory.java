@@ -6,13 +6,14 @@ import kongju.pointsystem.domain.user.entity.User;
 import java.util.UUID;
 
 @Entity
+@Table(name = "point_historys")
 public class PointHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private String type;
+    private PointType type;
     @Column(nullable = false)
     private long amount;
     @ManyToOne(fetch = FetchType.LAZY)
