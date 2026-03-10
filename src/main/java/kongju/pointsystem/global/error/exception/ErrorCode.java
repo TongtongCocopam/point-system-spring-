@@ -10,7 +10,11 @@ public enum ErrorCode {
     REFUND_PERIOD_EXPIRED(HttpStatus.BAD_REQUEST, "P002", "환불 기간이 만료되었습니다"),
     REFUND_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "P003", "이미 환불 처리되었습니다"),
     POINT_INVALID(HttpStatus.BAD_REQUEST, "P004", "잘못된 적립 금액입니다"),
-    INTERNAL_SERVER_ERROR(HttpStatus.BAD_REQUEST, "S001", "서버 내부 오류가 발생했습니다");
+    INTERNAL_SERVER_ERROR(HttpStatus.BAD_REQUEST, "S001", "서버 내부 오류가 발생했습니다"),
+    DATABASE_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "D001", "서버 점검 중입니다"),
+    DUPLICATE_DATA(HttpStatus.BAD_REQUEST, "D002", "이미 사용 중인 정보입니다"),
+    DATA_CONFLICT(HttpStatus.INTERNAL_SERVER_ERROR, "D003", "서버 점검 중입니다"),
+    UNKNOWN_DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "D004", "서버 점검 중입니다");
 
     private final HttpStatus status;
     private final String code;
