@@ -2,7 +2,7 @@ package kongju.pointsystem.domain.point.controller;
 
 import java.util.UUID;
 
-import kongju.pointsystem.domain.point.dto.PointEarnResponse;
+import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.common.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -10,15 +10,13 @@ import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import kongju.pointsystem.domain.point.dto.PointRequest;
-import kongju.pointsystem.domain.point.dto.RefundRequest;
-
 
 @RestController
 @RequestMapping("/api/v1/points")
 @RequiredArgsConstructor
 public class PointController {
     private PointService pointService;
+
 
     @PostMapping("/earn")
     public ResponseEntity<ApiResponse<PointEarnResponse>> EarnPoint(@RequestBody PointRequest request) {
@@ -37,8 +35,15 @@ public class PointController {
     }
 
     @GetMapping("/balance")
-    public ResponseEntity<ApiResponse<String>> balancePoint(@PathVariable UUID id) {
-        return null;
+    public ResponseEntity<ApiResponse<PointResponse>> balancePoint(@ModelAttribute PointBalanceRequest request) {
+        PointResponse pointResponse = pointService.balancePoint(
+                request.id(),
+                request.time()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success(pointResponse));
     }
 
     @PostMapping("/refund")
