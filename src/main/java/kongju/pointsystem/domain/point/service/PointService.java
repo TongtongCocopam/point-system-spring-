@@ -1,9 +1,16 @@
 package kongju.pointsystem.domain.point.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import kongju.pointsystem.domain.point.dto.PointBalanceExpireResponse;
+import kongju.pointsystem.domain.point.dto.PointBalanceResponse;
+import kongju.pointsystem.domain.point.dto.PointResponse;
 import kongju.pointsystem.domain.point.entity.PointDetail;
 import kongju.pointsystem.domain.point.entity.PointHistory;
 import kongju.pointsystem.domain.point.entity.PointType;
@@ -12,8 +19,7 @@ import kongju.pointsystem.domain.user.entity.UserBalance;
 import kongju.pointsystem.domain.user.repository.UserRepository;
 import kongju.pointsystem.global.error.exception.PointInvalidException;
 import kongju.pointsystem.global.error.exception.UserNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+
 
 import kongju.pointsystem.domain.point.dto.PointEarnResponse;
 import kongju.pointsystem.domain.point.repository.PointDetailRepository;
@@ -36,7 +42,7 @@ public class PointService {
      * @param userId 사용자 id
      * @param point  적립할 금액
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public PointEarnResponse earnPoint(UUID userId, Long point) {
         // id로 유저 확인
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
@@ -56,6 +62,7 @@ public class PointService {
         PointDetail pointdetail = PointDetail.builder()
                 .expiredAt(LocalDateTime.now().plusMonths(1))
                 .amount(point)
+                .remainAmount(point)
                 .user(user)
                 .build();
         pointDetailRepository.save(pointdetail);
@@ -76,4 +83,42 @@ public class PointService {
                 .build();
 
     }
+
+    /**
+     * 포인트 조회
+     *
+     * @param userId 사용자 id
+     * @param time   만료 일자
+     */
+    @Transactional(readOnly = true)
+    public PointResponse balancePoint(UUID userId, LocalDateTime time) {
+        // id로 유저 확인
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+
+        // 유저 발란스가 있는지 확인 or 없으면 생성
+        UserBalance balance = balanceRepository.findByUserIdWithLock(userId)
+                .orElseGet(() -> UserBalance.builder()
+                        .user(user)
+                        .balance(0L)
+                        .build());
+
+        if (time == null) {
+            return PointBalanceResponse.builder()
+                    .balance(balance.getBalance())
+                    .build();
+        }
+
+        List<PointDetail> pointDetailList = pointDetailRepository.findByPointExpire(userId, time);
+        Long totalAmount = pointDetailList
+                .stream()
+                .mapToLong(PointDetail::getRemainAmount)
+                .sum();
+
+        return PointBalanceExpireResponse.builder()
+                .balance(totalAmount)
+                .expiredAt(time)
+                .build();
+    }
+
+
 }
