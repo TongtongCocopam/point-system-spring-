@@ -4,9 +4,9 @@ import jakarta.persistence.Column;
 import lombok.Builder;
 
 @Builder
-public record PointEarnResponse(
-        @Column(name = "적립 금액")
-        Long earnedAmount,
+public record PointRefundResponse(
+        @Column(name = "환불 금액")
+        Long refundAmount,
         @Column(name = "현재 잔액")
         Long currentBalance,
         @Column(name = "처리 결과")
