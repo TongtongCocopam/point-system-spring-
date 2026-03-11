@@ -17,7 +17,7 @@ import kongju.pointsystem.domain.point.dto.RefundRequest;
 public class PointController {
 
     @PostMapping("/earn")
-    public ResponseEntity<ApiResponse<String>> EarnPoint(@RequestBody PointRequest request) {
+    public ResponseEntity<ApiResponse<Void>> EarnPoint(@RequestBody PointRequest request) {
         return null;
     }
 
