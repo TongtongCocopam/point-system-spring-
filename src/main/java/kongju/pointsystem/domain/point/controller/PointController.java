@@ -2,6 +2,7 @@ package kongju.pointsystem.domain.point.controller;
 
 import java.util.UUID;
 
+import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.common.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,11 @@ import kongju.pointsystem.domain.point.dto.RefundRequest;
 @RequestMapping("/api/v1/points")
 @RequiredArgsConstructor
 public class PointController {
+    private PointService pointService;
 
     @PostMapping("/earn")
     public ResponseEntity<ApiResponse<Void>> EarnPoint(@RequestBody PointRequest request) {
+        pointService.earnPoint(request.id(), request.point());
         return null;
     }
 
