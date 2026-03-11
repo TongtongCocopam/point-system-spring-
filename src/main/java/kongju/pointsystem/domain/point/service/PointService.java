@@ -15,6 +15,7 @@ import kongju.pointsystem.global.error.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import kongju.pointsystem.domain.point.dto.PointEarnResponse;
 import kongju.pointsystem.domain.point.repository.PointDetailRepository;
 import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
 import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
@@ -36,7 +37,7 @@ public class PointService {
      * @param point  적립할 금액
      */
     @Transactional
-    public void earnPoint(UUID userId, Long point) {
+    public PointEarnResponse earnPoint(UUID userId, Long point) {
         // id로 유저 확인
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         // 유효한 포인트인지 확인
@@ -68,6 +69,11 @@ public class PointService {
                 .referenceId(referenceId)
                 .build();
         pointHistoryRepository.save(pointHistory);
+        return PointEarnResponse.builder()
+                .earnedAmount(point)
+                .currentBalance(balance.getBalance())
+                .message("포인트가 적립되었습니다.")
+                .build();
 
     }
 }
