@@ -1,18 +1,19 @@
 package kongju.pointsystem.domain.user.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "user_balances")
 public class UserBalance {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private long balance;
     @OneToOne(fetch = FetchType.LAZY)

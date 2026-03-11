@@ -2,10 +2,17 @@ package kongju.pointsystem.domain.point.entity;
 
 import jakarta.persistence.*;
 import kongju.pointsystem.domain.user.entity.User;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Entity
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "point_histories")
 public class PointHistory {
     @Id
@@ -20,5 +27,5 @@ public class PointHistory {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     @Column(nullable = false)
-    private long referenceId;
+    private UUID referenceId;
 }
