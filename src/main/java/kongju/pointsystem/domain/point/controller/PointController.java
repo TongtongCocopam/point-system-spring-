@@ -2,8 +2,10 @@ package kongju.pointsystem.domain.point.controller;
 
 import java.util.UUID;
 
+import kongju.pointsystem.domain.point.dto.PointEarnResponse;
 import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.common.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +21,14 @@ public class PointController {
     private PointService pointService;
 
     @PostMapping("/earn")
-    public ResponseEntity<ApiResponse<Void>> EarnPoint(@RequestBody PointRequest request) {
-        pointService.earnPoint(request.id(), request.point());
-        return null;
+    public ResponseEntity<ApiResponse<PointEarnResponse>> EarnPoint(@RequestBody PointRequest request) {
+        PointEarnResponse pointEarnResponse = pointService.earnPoint(
+                request.id(),
+                request.point()
+        );
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(pointEarnResponse));
     }
 
     @PostMapping("/use")
