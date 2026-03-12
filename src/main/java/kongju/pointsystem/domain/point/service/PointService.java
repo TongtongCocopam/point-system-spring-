@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.UUID;
 
 import kongju.pointsystem.domain.point.dto.*;
+import kongju.pointsystem.domain.point.entity.PointUsage;
+import kongju.pointsystem.domain.point.repository.PointUsageRepository;
 import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class PointService {
     private final PointDetailRepository pointDetailRepository;
     private final PointHistoryRepository pointHistoryRepository;
     private final UserBalanceRepository userBalanceRepository;
+    private final PointUsageRepository pointUsageRepository;
 
     /**
      * 포인트 적립하는 서비스 로직
@@ -53,7 +56,7 @@ public class PointService {
         UserBalance balance = balanceRepository.findByUserIdWithLock(userId)
                 .orElseGet(() -> UserBalance.builder()
                         .user(user)
-                        .balance(0L)
+                        .totalAmount(0L)
                         .build());
         balanceRepository.save(balance);
 
@@ -75,7 +78,7 @@ public class PointService {
         pointHistoryRepository.save(pointHistory);
         return PointEarnResponse.builder()
                 .earnedAmount(point)
-                .currentBalance(balance.getBalance())
+                .currentBalance(balance.getTotalAmount())
                 .message("포인트가 적립되었습니다.")
                 .build();
 
@@ -96,12 +99,12 @@ public class PointService {
         UserBalance balance = balanceRepository.findByUserIdWithLock(userId)
                 .orElseGet(() -> UserBalance.builder()
                         .user(user)
-                        .balance(0L)
+                        .totalAmount(0L)
                         .build());
 
         if (time == null) {
             return PointBalanceResponse.builder()
-                    .balance(balance.getBalance())
+                    .balance(balance.getTotalAmount())
                     .build();
         }
 
@@ -117,67 +120,70 @@ public class PointService {
                 .build();
     }
 
-    /**
-     * 포인트 사용
-     *
-     * @param userId 사용자 id
-     * @param point  사용할 포인트
-     * @return
-     */
     @Transactional
     public PointUseResponse usePoint(UUID userId, Long point) {
-        if(point <= 0){
+        // 유효 포인트인지 확인
+        if (point <= 0) {
             throw new PointInvalidException();
         }
-
-        //id로 유저 확인
+        // 유저 확인
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
-        // total_amount보다 작거나 같은지 확인
+        // 잔고 확인
         UserBalance userBalance = userBalanceRepository.findByUserIdWithLock(userId)
                 .orElseGet(() -> UserBalance.builder()
                         .user(user)
-                        .balance(0L)
+                        .totalAmount(0L)
                         .build());
 
-        if(point > userBalance.getBalance()){
+        Long totalAmount = userBalance.getTotalAmount();
+        // 총 금액 차감
+        if (totalAmount < point) {
             throw new BalanceNotEnoughException();
         }
+        userBalance.setTotalAmount(totalAmount - point);
 
-        //유저 발란스 금액 차감
-        userBalance.setBalance(userBalance.getBalance() - point);
-
+        // 포인트 디테일 불러오기
+        LocalDateTime now = LocalDateTime.now();
+        List<PointDetail> pointDetailList = pointDetailRepository.findRemainedDetailsNotExpired(userId, now);
         // 포인트 차감
-        List<PointDetail> pointDetailList = pointDetailRepository
-                .findByPointIdNow(userId, LocalDateTime.now());
-
         UUID referenceId = UUID.randomUUID();
+        Long originalPoint = point;
 
-
-        //포인트 리스트를 불러오기
-        for(PointDetail pointDetail : pointDetailList){
-            Long amount = pointDetail.getRemainAmount();
-            // 포인트 차감
-            if (point > amount) {
-                pointDetail.setRemainAmount(0);
-                point -= amount;
-
-            }else{
-                pointDetail.setRemainAmount(amount - point);
-
-                break;
-            }
-        }
         // 포인트 히스토리 등록
         PointHistory pointHistory = PointHistory.builder()
-                .amount(point)
                 .type(PointType.USE)
-                .user(user)
                 .referenceId(referenceId)
-                .pointDetail(pointDetailList)
+                .amount(originalPoint)
+                .user(user)
                 .build();
-        // 출력
-    }
 
+        pointHistoryRepository.save(pointHistory);
+
+        for (PointDetail pointDetail : pointDetailList) {
+            if (point == 0) {
+                break;
+            }
+            Long remainAmount = pointDetail.getRemainAmount();
+            long consumedAmount = Math.min(remainAmount, point);
+
+            pointDetail.setRemainAmount(remainAmount - consumedAmount);
+            point -= consumedAmount;
+
+            // 포인트 usage등록
+            PointUsage pointUsage = PointUsage.builder()
+                    .pointHistory(pointHistory)
+                    .pointDetail(pointDetail)
+                    .amount(consumedAmount)
+                    .build();
+
+            pointUsageRepository.save(pointUsage);
+        }
+
+        return PointUseResponse.builder()
+                .useAmount(originalPoint)
+                .currentBalance(userBalance.getTotalAmount())
+                .build();
+    }
 
 }

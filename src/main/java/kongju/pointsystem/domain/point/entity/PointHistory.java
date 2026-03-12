@@ -1,7 +1,8 @@
 package kongju.pointsystem.domain.point.entity;
 
-import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.*;
 import kongju.pointsystem.domain.user.entity.User;
@@ -31,5 +32,5 @@ public class PointHistory {
     @Column(nullable = false)
     private UUID referenceId;
     @OneToMany(mappedBy = "pointHistory", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PointUsage> pointUsage;
+    private List<PointUsage> pointUsages = new ArrayList<>();
 }
