@@ -25,4 +25,13 @@ public interface PointDetailRepository extends JpaRepository<PointDetail, UUID> 
             "and pd.remainAmount > 0 "
     )
     List<PointDetail> findByPointExpire(@Param("userId") UUID userId, @Param("time") LocalDateTime time);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT pd FROM PointDetail pd " +
+            "WHERE pd.user.id = :userId " +
+            "and pd.expiredAt <= :now " +
+            "and pd.remainAmount > 0 " +
+            "ORDER BY pd.expiredAt ASC "
+    )
+    List<PointDetail> findRemainedDetailsNotExpired(@Param("userId") UUID userId, @Param("now") LocalDateTime now);
 }

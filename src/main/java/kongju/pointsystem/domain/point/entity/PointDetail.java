@@ -1,6 +1,8 @@
 package kongju.pointsystem.domain.point.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.*;
@@ -11,6 +13,7 @@ import lombok.*;
 @Entity
 @Builder
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "point_details")
@@ -27,5 +30,7 @@ public class PointDetail {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    @OneToMany(mappedBy = "pointDetail", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PointUsage> pointUsages = new ArrayList<>();
 
 }
