@@ -53,8 +53,15 @@ public class PointController {
     }
 
     @PostMapping("/refund")
-    public ResponseEntity<ApiResponse<String>> refundPoint(@RequestBody RefundRequest request) {
-        return null;
+    public ResponseEntity<ApiResponse<PointRefundResponse>> refundPoint(@RequestBody RefundRequest request) {
+        PointRefundResponse pointRefundResponse = pointService.refundPoint(
+                request.id(),
+                request.referenceId()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success(pointRefundResponse));
     }
 
 }

@@ -4,5 +4,5 @@ import java.util.UUID;
 
 public record RefundRequest(
         UUID id,
-        Long referenceId
+        UUID referenceId
 ) {}
