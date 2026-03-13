@@ -19,7 +19,7 @@ public class PointController {
 
 
     @PostMapping("/earn")
-    public ResponseEntity<ApiResponse<PointEarnResponse>> EarnPoint(@RequestBody PointRequest request) {
+    public ResponseEntity<ApiResponse<PointEarnResponse>> earnPoint(@RequestBody PointRequest request) {
         PointEarnResponse pointEarnResponse = pointService.earnPoint(
                 request.id(),
                 request.point()
