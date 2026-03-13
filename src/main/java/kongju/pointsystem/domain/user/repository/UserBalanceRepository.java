@@ -12,7 +12,7 @@ import kongju.pointsystem.domain.user.entity.UserBalance;
 
 
 public interface UserBalanceRepository extends JpaRepository<UserBalance, UUID> {
-    Optional<UserBalance> findByUserId(UUID userId);
+    UserBalance findByUserId(UUID userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<UserBalance> findByUserIdWithLock(@Param("userId") UUID userId);
