@@ -16,21 +16,18 @@ import org.springframework.data.repository.query.Param;
 
 
 public interface PointHistoryRepository extends JpaRepository<PointHistory, UUID> {
-    @Query("SELECT ph FROM PointHistory ph " +
+    @Query("SELECT COUNT(ph) > 0 " +
+            "FROM PointHistory ph " +
             "WHERE ph.user.id = :userId " +
-            "and ph.referenceId = :referenceId " +
-            "and ph.type = 'REFUND' ")
-    boolean findRefundPoints(@Param("userId") UUID userId, @Param("referenceId") UUID referenceId);
+            "AND ph.referenceId = :referenceId")
+    boolean existsReferenceId(@Param("userId") UUID userId, @Param("referenceId") UUID referenceId);
 
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
-//    @Query("SELECT ph FROM PointHistory ph " +
-//            "JOIN PointDetail pd ON ph.user.id = pd.user.id " +
-//            "WHERE ph.user.id = :userId " +
-//            "and ph.referenceId = :referenceId " +
-//            "and ph.type = 'USE' " +
-//            "AND pd.expiredAt > CURRENT_TIMESTAMP " +
-//            "ORDER BY pd.expiredAt ASC")
-//    List<PointHistory> findRefundablePoints(@Param("userId") UUID userId, @Param("referenceId") long referenceId);
+    @Query("SELECT COUNT(ph) > 0 " +
+            "FROM PointHistory ph " +
+            "WHERE ph.user.id = :userId " +
+            "AND ph.referenceId = :referenceId " +
+            "AND ph.type = 'REFUND'")
+    boolean findRefundPoints(@Param("userId") UUID userId, @Param("referenceId") UUID referenceId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT DISTINCT ph " +

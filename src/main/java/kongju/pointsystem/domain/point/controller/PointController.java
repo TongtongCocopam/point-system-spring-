@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/points")
 @RequiredArgsConstructor
 public class PointController {
-    private PointService pointService;
+    private final PointService pointService;
 
 
     @PostMapping("/earn")

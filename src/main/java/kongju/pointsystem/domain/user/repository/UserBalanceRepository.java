@@ -15,7 +15,6 @@ import kongju.pointsystem.domain.user.entity.UserBalance;
 public interface UserBalanceRepository extends JpaRepository<UserBalance, UUID> {
     UserBalance findByUserId(UUID userId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select b from UserBalance b where b.user.id = :userId")
     Optional<UserBalance> findByUserIdWithLock(@Param("userId") UUID userId);
 
