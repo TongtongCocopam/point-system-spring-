@@ -6,14 +6,12 @@ import java.util.List;
 
 import jakarta.persistence.*;
 import kongju.pointsystem.domain.user.entity.User;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 @Entity
 @Builder
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "point_histories")
@@ -31,6 +29,7 @@ public class PointHistory {
     private User user;
     @Column(nullable = false)
     private UUID referenceId;
+    @Builder.Default
     @OneToMany(mappedBy = "pointHistory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PointUsage> pointUsages = new ArrayList<>();
 }
