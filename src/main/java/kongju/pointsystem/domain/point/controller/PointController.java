@@ -30,8 +30,14 @@ public class PointController {
     }
 
     @PostMapping("/use")
-    public ResponseEntity<ApiResponse<String>> usePoint(@RequestBody PointRequest request) {
-        return null;
+    public ResponseEntity<ApiResponse<PointUseResponse>> usePoint(@RequestBody PointRequest request) {
+        PointUseResponse pointUseResponse = pointService.usePoint(
+                request.id(),
+                request.point()
+        );
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success(pointUseResponse));
     }
 
     @GetMapping("/balance")
