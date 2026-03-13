@@ -2,12 +2,13 @@ package kongju.pointsystem.domain.point.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.point.entity.PointUsage;
 import kongju.pointsystem.domain.point.repository.PointUsageRepository;
-import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
+import kongju.pointsystem.global.error.exception.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,6 @@ import kongju.pointsystem.domain.point.entity.PointType;
 import kongju.pointsystem.domain.user.entity.User;
 import kongju.pointsystem.domain.user.entity.UserBalance;
 import kongju.pointsystem.domain.user.repository.UserRepository;
-import kongju.pointsystem.global.error.exception.PointInvalidException;
-import kongju.pointsystem.global.error.exception.UserNotFoundException;
 
 
 import kongju.pointsystem.domain.point.repository.PointDetailRepository;
@@ -183,6 +182,75 @@ public class PointService {
         return PointUseResponse.builder()
                 .useAmount(originalPoint)
                 .currentBalance(userBalance.getTotalAmount())
+                .build();
+    }
+
+    @Transactional
+    public PointRefundResponse refundPoint(UUID userId, UUID referenceId) {
+        // 유저 확인
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+
+        // 유효한 referenceId인지 확인
+        boolean referenceIdExists = pointHistoryRepository.findRefundPoints(userId, referenceId);
+        if (!referenceIdExists) {
+            throw new RefundReferenceIdNotExsistException();
+        }
+
+        // 환불 여부 체크
+        boolean isRefund = pointHistoryRepository.findRefundPoints(userId, referenceId);
+
+        if (isRefund) {
+            throw new RefundAlreadyProcessedException();
+        }
+
+        // 히스토리와 연관된 usage 찾기
+        PointHistory pointHistory = pointHistoryRepository.findRefundablePoints(userId, referenceId);
+        // usage와 연관된 detail찾기
+        List<PointUsage> pointUsages = pointHistory.getPointUsages();
+        LocalDateTime now = LocalDateTime.now();
+        Long refundAmount = 0L;
+        for (PointUsage pointUsage : pointUsages) {
+            PointDetail pointDetail = pointUsage.getPointDetail();
+            LocalDateTime expiredAt = pointDetail.getExpiredAt();
+            Long amount = pointUsage.getAmount();
+            if (expiredAt.isAfter(now)) {
+                pointDetail.setAmount(pointDetail.getAmount() + amount);
+                refundAmount += amount;
+            }
+
+
+        }
+
+        PointHistory pointHistoryRefund = PointHistory.builder()
+                .user(user)
+                .amount(refundAmount)
+                .type(PointType.REFUND)
+                .referenceId(referenceId)
+                .build();
+        Long expiredAmount = pointHistory.getAmount() - refundAmount;
+
+        if (expiredAmount > 0) {
+            PointHistory pointHistoryExpired = PointHistory.builder()
+                    .user(user)
+                    .amount(expiredAmount)
+                    .type(PointType.EXPIRE)
+                    .referenceId(referenceId)
+                    .build();
+            pointHistoryRepository.save(pointHistoryExpired);
+        }
+
+        pointHistoryRepository.save(pointHistoryRefund);
+
+        // 총 잔액 수정
+        UserBalance userBalance = userBalanceRepository.findByUserId(userId);
+        Long totalAmount = userBalance.getTotalAmount();
+        userBalance.setTotalAmount(totalAmount + refundAmount);
+
+        return PointRefundResponse.builder()
+                .refundAmount(refundAmount)
+                .currentBalance(userBalance.getTotalAmount())
+                .expiredAmount(expiredAmount)
+                .message("환불이 완료되었습니다.")
                 .build();
     }
 
