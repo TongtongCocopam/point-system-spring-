@@ -18,7 +18,7 @@ public interface PointDetailRepository extends JpaRepository<PointDetail, UUID> 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<PointDetail> findByUserId(UUID userId);
 
-    @Query("SELECT ph FROM PointHistory ph " +
+    @Query("SELECT pd FROM PointHistory ph " +
             "JOIN PointDetail pd ON ph.user.id = pd.user.id " +
             "WHERE ph.user.id = :userId " +
             "and pd.expiredAt <= :time " +
@@ -29,7 +29,7 @@ public interface PointDetailRepository extends JpaRepository<PointDetail, UUID> 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT pd FROM PointDetail pd " +
             "WHERE pd.user.id = :userId " +
-            "and pd.expiredAt <= :now " +
+            "and pd.expiredAt > :now " +
             "and pd.remainAmount > 0 " +
             "ORDER BY pd.expiredAt ASC "
     )

@@ -2,7 +2,6 @@ package kongju.pointsystem.domain.point.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import kongju.pointsystem.domain.point.dto.*;
@@ -67,7 +66,7 @@ public class PointService {
                 .user(user)
                 .build();
         pointDetailRepository.save(pointdetail);
-
+        balance.setTotalAmount(balance.getTotalAmount() + point);
         // 포인트 히스토리 생성
         PointHistory pointHistory = PointHistory.builder()
                 .type(PointType.EARN)
@@ -119,6 +118,13 @@ public class PointService {
                 .build();
     }
 
+    /**
+     * 포인트 사용
+     *
+     * @param userId 사용할 유저 아이디
+     * @param point  사용할 포인트
+     * @return
+     */
     @Transactional
     public PointUseResponse usePoint(UUID userId, Long point) {
         // 유효 포인트인지 확인
@@ -191,7 +197,7 @@ public class PointService {
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         // 유효한 referenceId인지 확인
-        boolean referenceIdExists = pointHistoryRepository.findRefundPoints(userId, referenceId);
+        boolean referenceIdExists = pointHistoryRepository.existsReferenceId(userId, referenceId);
         if (!referenceIdExists) {
             throw new RefundReferenceIdNotExsistException();
         }
@@ -205,6 +211,7 @@ public class PointService {
 
         // 히스토리와 연관된 usage 찾기
         PointHistory pointHistory = pointHistoryRepository.findRefundablePoints(userId, referenceId);
+
         // usage와 연관된 detail찾기
         List<PointUsage> pointUsages = pointHistory.getPointUsages();
         LocalDateTime now = LocalDateTime.now();

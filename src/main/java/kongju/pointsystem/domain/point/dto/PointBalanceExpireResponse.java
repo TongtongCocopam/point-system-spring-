@@ -2,6 +2,7 @@ package kongju.pointsystem.domain.point.dto;
 
 import jakarta.persistence.Column;
 import lombok.Builder;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
