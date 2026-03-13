@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,6 +16,7 @@ public interface UserBalanceRepository extends JpaRepository<UserBalance, UUID> 
     UserBalance findByUserId(UUID userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select b from UserBalance b where b.user.id = :userId")
     Optional<UserBalance> findByUserIdWithLock(@Param("userId") UUID userId);
 
 }

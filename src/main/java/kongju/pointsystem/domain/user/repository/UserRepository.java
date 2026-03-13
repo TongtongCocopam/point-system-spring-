@@ -9,5 +9,5 @@ import kongju.pointsystem.domain.user.entity.User;
 
 
 public interface UserRepository extends JpaRepository<User, UUID> {
-    boolean findUserByEmail(@Email String email);
+    boolean existsByEmail(@Email String email);
 }
