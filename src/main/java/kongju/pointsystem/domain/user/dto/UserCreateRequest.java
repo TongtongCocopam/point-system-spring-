@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record UserCreateRequest(
-        @NotBlank(message = "이메일은 필수입니다.")
-        @Email(message = "유효한 이메일 형식이 아닙니다.")
+        @NotBlank(message = "{valid.email.required}")
+        @Email(message = "{valid.email.format}")
         String email,
-        @NotBlank(message = "비밀번호는 필수입니다.")
-        @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
+        @NotBlank(message = "{valid.password.required}")
+        @Size(min = 8, message = "{valid.password.size}")
         String password,
-        @NotBlank(message = "이름은 필수입니다.")
+        @NotBlank(message = "{valid.required}")
         String name
 ) {
 }

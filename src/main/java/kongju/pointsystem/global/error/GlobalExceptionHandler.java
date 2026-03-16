@@ -1,13 +1,19 @@
-package kongju.pointsystem.global.error.exception;
+package kongju.pointsystem.global.error;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.UncategorizedDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import kongju.pointsystem.global.error.exception.BusinessException;
+
 
 import kongju.pointsystem.global.common.ApiResponse;
 
@@ -98,5 +104,21 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.UNKNOWN_DATABASE_ERROR.getStatus())
                 .body(ApiResponse.fail(ErrorCode.UNKNOWN_DATABASE_ERROR));
 
+    }
+
+    /**
+     * valid 검증 오류
+     * @param e
+     * @return
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        FieldError error = e.getBindingResult().getFieldErrors().get(0);
+
+        String message = error.getDefaultMessage();
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_INPUT.getStatus())
+                .body(ApiResponse.fail(ErrorCode.INVALID_INPUT, message));
     }
 }

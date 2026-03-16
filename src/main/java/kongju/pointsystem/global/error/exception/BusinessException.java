@@ -1,5 +1,6 @@
 package kongju.pointsystem.global.error.exception;
 
+import kongju.pointsystem.global.error.ErrorCode;
 import lombok.Getter;
 
 @Getter

@@ -1,5 +1,6 @@
 package kongju.pointsystem.domain.point.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class PointController {
     private final PointService pointService;
 
     @PostMapping("/earn")
-    public ResponseEntity<ApiResponse<PointEarnResponse>> earnPoint(@RequestBody PointRequest request) {
+    public ResponseEntity<ApiResponse<PointEarnResponse>> earnPoint(@Valid @RequestBody PointRequest request) {
         PointEarnResponse pointEarnResponse = pointService.earnPoint(request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -26,7 +27,7 @@ public class PointController {
     }
 
     @PostMapping("/use")
-    public ResponseEntity<ApiResponse<PointUseResponse>> usePoint(@RequestBody PointRequest request) {
+    public ResponseEntity<ApiResponse<PointUseResponse>> usePoint(@Valid @RequestBody PointRequest request) {
         PointUseResponse pointUseResponse = pointService.usePoint(request);
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -34,7 +35,7 @@ public class PointController {
     }
 
     @GetMapping("/balance")
-    public ResponseEntity<ApiResponse<PointResponse>> balancePoint(@ModelAttribute PointBalanceRequest request) {
+    public ResponseEntity<ApiResponse<PointResponse>> balancePoint(@Valid @ModelAttribute PointBalanceRequest request) {
         PointResponse pointResponse = pointService.balancePoint(request);
 
         return ResponseEntity
@@ -43,7 +44,7 @@ public class PointController {
     }
 
     @PostMapping("/refund")
-    public ResponseEntity<ApiResponse<PointRefundResponse>> refundPoint(@RequestBody RefundRequest request) {
+    public ResponseEntity<ApiResponse<PointRefundResponse>> refundPoint(@Valid @RequestBody RefundRequest request) {
         PointRefundResponse pointRefundResponse = pointService.refundPoint(request);
 
         return ResponseEntity

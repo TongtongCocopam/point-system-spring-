@@ -9,7 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 
 public record PointBalanceRequest(
-        @NotNull
+        @NotNull(message = "{valid.id.required}")
         UUID id,
         @Nullable
         @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
