@@ -4,10 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import kongju.pointsystem.domain.point.dto.*;
-import kongju.pointsystem.domain.point.entity.PointUsage;
-import kongju.pointsystem.domain.point.repository.PointUsageRepository;
-import kongju.pointsystem.global.error.exception.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,11 +14,14 @@ import kongju.pointsystem.domain.point.entity.PointType;
 import kongju.pointsystem.domain.user.entity.User;
 import kongju.pointsystem.domain.user.entity.UserBalance;
 import kongju.pointsystem.domain.user.repository.UserRepository;
-
-
+import kongju.pointsystem.domain.point.dto.*;
+import kongju.pointsystem.domain.point.entity.PointUsage;
+import kongju.pointsystem.domain.point.repository.PointUsageRepository;
+import kongju.pointsystem.global.error.exception.*;
 import kongju.pointsystem.domain.point.repository.PointDetailRepository;
 import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
 import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
+
 
 @Service
 @RequiredArgsConstructor
@@ -39,17 +38,23 @@ public class PointService {
     /**
      * 포인트 적립하는 서비스 로직
      *
-     * @param userId 사용자 id
-     * @param point  적립할 금액
+     * @param request 사용자 id와 적립할 포인트
      */
     @Transactional
-    public PointEarnResponse earnPoint(UUID userId, Long point) {
+    public PointEarnResponse earnPoint(PointRequest request) {
+        UUID userId = request.id();
+        Long point = request.point();
+
         // id로 유저 확인
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
         // 유효한 포인트인지 확인
         if (point <= 0) {
             throw new PointInvalidException();
         }
+
         // 유저 발란스가 있는지 확인 or 없으면 생성
         UserBalance balance = balanceRepository.findByUserIdWithLock(userId)
                 .orElseGet(() -> UserBalance.builder()
@@ -66,6 +71,7 @@ public class PointService {
                 .user(user)
                 .build();
         pointDetailRepository.save(pointdetail);
+
         balance.setTotalAmount(balance.getTotalAmount() + point);
         // 포인트 히스토리 생성
         PointHistory pointHistory = PointHistory.builder()
@@ -74,6 +80,7 @@ public class PointService {
                 .user(user)
                 .build();
         pointHistoryRepository.save(pointHistory);
+
         return PointEarnResponse.builder()
                 .earnedAmount(point)
                 .currentBalance(balance.getTotalAmount())
@@ -85,13 +92,15 @@ public class PointService {
     /**
      * 포인트 조회
      *
-     * @param userId 사용자 id
-     * @param time   만료 일자
+     * @param request 사용자 id, 사용자가 확인할 날짜
      */
     @Transactional(readOnly = true)
-    public PointResponse balancePoint(UUID userId, LocalDateTime time) {
+    public PointResponse balancePoint(PointBalanceRequest request) {
+        UUID userId = request.id();
+        LocalDateTime time = request.time();
         // id로 유저 확인
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
 
         // 유저 발란스가 있는지 확인 or 없으면 생성
         UserBalance balance = balanceRepository.findByUserIdWithLock(userId)
@@ -121,18 +130,20 @@ public class PointService {
     /**
      * 포인트 사용
      *
-     * @param userId 사용할 유저 아이디
-     * @param point  사용할 포인트
+     * @param request 사용할 유저 아이디, 사용할 포인트
      * @return
      */
     @Transactional
-    public PointUseResponse usePoint(UUID userId, Long point) {
+    public PointUseResponse usePoint(PointRequest request) {
+        UUID userId = request.id();
+        Long point = request.point();
         // 유효 포인트인지 확인
         if (point <= 0) {
             throw new PointInvalidException();
         }
         // 유저 확인
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
 
         // 잔고 확인
         UserBalance userBalance = userBalanceRepository.findByUserIdWithLock(userId)
@@ -151,6 +162,7 @@ public class PointService {
         // 포인트 디테일 불러오기
         LocalDateTime now = LocalDateTime.now();
         List<PointDetail> pointDetailList = pointDetailRepository.findRemainedDetailsNotExpired(userId, now);
+
         // 포인트 차감
         UUID referenceId = UUID.randomUUID();
         Long originalPoint = point;
@@ -169,6 +181,7 @@ public class PointService {
             if (point == 0) {
                 break;
             }
+
             Long remainAmount = pointDetail.getRemainAmount();
             long consumedAmount = Math.min(remainAmount, point);
 
@@ -192,12 +205,16 @@ public class PointService {
     }
 
     @Transactional
-    public PointRefundResponse refundPoint(UUID userId, UUID referenceId) {
+    public PointRefundResponse refundPoint(RefundRequest request) {
+        UUID userId = request.id();
+        UUID referenceId = request.referenceId();
         // 유저 확인
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
 
         // 유효한 referenceId인지 확인
         boolean referenceIdExists = pointHistoryRepository.existsReferenceId(userId, referenceId);
+
         if (!referenceIdExists) {
             throw new RefundReferenceIdNotExsistException();
         }
@@ -216,6 +233,7 @@ public class PointService {
         List<PointUsage> pointUsages = pointHistory.getPointUsages();
         LocalDateTime now = LocalDateTime.now();
         Long refundAmount = 0L;
+
         for (PointUsage pointUsage : pointUsages) {
             PointDetail pointDetail = pointUsage.getPointDetail();
             LocalDateTime expiredAt = pointDetail.getExpiredAt();
@@ -224,8 +242,6 @@ public class PointService {
                 pointDetail.setAmount(pointDetail.getAmount() + amount);
                 refundAmount += amount;
             }
-
-
         }
 
         PointHistory pointHistoryRefund = PointHistory.builder()

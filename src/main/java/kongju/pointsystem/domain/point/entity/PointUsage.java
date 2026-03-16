@@ -2,7 +2,6 @@ package kongju.pointsystem.domain.point.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
