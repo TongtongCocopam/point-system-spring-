@@ -18,6 +18,7 @@ import kongju.pointsystem.global.error.exception.EmailDuplicatedException;
 @RequiredArgsConstructor
 @Transactional
 public class UserService {
+
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final UserBalanceRepository userBalanceRepository;

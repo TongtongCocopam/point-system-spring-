@@ -1,13 +1,15 @@
 package kongju.pointsystem.domain.user.entity;
 
 import jakarta.persistence.*;
+import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 import lombok.*;
+
+import kongju.pointsystem.global.error.exception.PointInvalidException;
 
 import java.util.UUID;
 
 @Entity
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -20,4 +22,30 @@ public class UserBalance {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
     private User user;
+
+    public void earn(Long point) {
+        // 유효한 포인트인지 확인
+        if (point <= 0) {
+            throw new PointInvalidException();
+        }
+        this.totalAmount += point;
+    }
+
+    public void use(Long point) {
+        // 유효한 포인트인지 확인
+        if (point <= 0) {
+            throw new PointInvalidException();
+        }
+
+        // 총 금액 차감
+        if (totalAmount < point) {
+            throw new BalanceNotEnoughException();
+        }
+
+        this.totalAmount -= point;
+    }
+
+    public void refund(Long refundAmount) {
+        this.totalAmount += refundAmount;
+    }
 }
