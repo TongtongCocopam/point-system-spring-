@@ -1,7 +1,9 @@
 package kongju.pointsystem.global.common;
 
-import kongju.pointsystem.global.error.exception.ErrorCode;
 import lombok.*;
+
+import kongju.pointsystem.global.error.ErrorCode;
+
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -43,6 +45,20 @@ public class ApiResponse<T> {
                 ErrorResponse.builder()
                         .code(errorCode.getCode())
                         .message(errorCode.getMessage())
+                        .build()
+        );
+    }
+
+    /**
+     * 실패했을 때 (메시지를 직접 입력받는 경우)
+     */
+    public static ApiResponse<Void> fail(ErrorCode errorCode, String message) {
+        return new ApiResponse<>(
+                false,
+                null,
+                ErrorResponse.builder()
+                        .code(errorCode.getCode())
+                        .message(message)
                         .build()
         );
     }

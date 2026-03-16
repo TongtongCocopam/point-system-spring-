@@ -1,16 +1,16 @@
 package kongju.pointsystem.domain.point.dto;
 
-import jakarta.persistence.Column;
-import lombok.Builder;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.time.LocalDateTime;
+
+import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 @Builder
 public record PointBalanceExpireResponse(
-        @Column(name = "잔액")
+        @JsonProperty("잔액")
         Long balance,
-        @Column(name = "만료 예정일")
+        @JsonProperty("만료 예정일")
         LocalDateTime expiredAt
 ) implements PointResponse {
 }
