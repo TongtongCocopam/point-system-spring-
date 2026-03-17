@@ -60,9 +60,7 @@ public class PointService {
 
         // 포인트 디테일 생성
         PointDetail pointdetail = PointDetail.builder()
-                .expiredAt(LocalDateTime.now().plusMonths(1))
                 .amount(point)
-                .remainAmount(point)
                 .user(user)
                 .build();
         pointDetailRepository.save(pointdetail);
@@ -221,11 +219,12 @@ public class PointService {
         List<PointUsage> pointUsages = pointHistory.getPointUsages();
         Long refundAmount = 0L;
 
+        LocalDateTime now = LocalDateTime.now();
         for (PointUsage pointUsage : pointUsages) {
             PointDetail pointDetail = pointUsage.getPointDetail();
             Long amount = pointUsage.getAmount();
 
-            refundAmount += pointDetail.refund(amount);
+            refundAmount += pointDetail.refund(amount, now);
         }
 
         PointHistory pointHistoryRefund = PointHistory.builder()

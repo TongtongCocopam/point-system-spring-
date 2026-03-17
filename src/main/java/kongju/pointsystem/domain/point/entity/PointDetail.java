@@ -11,10 +11,8 @@ import lombok.*;
 
 
 @Entity
-@Builder
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "point_details")
 public class PointDetail {
     @Id
@@ -32,6 +30,15 @@ public class PointDetail {
     @OneToMany(mappedBy = "pointDetail", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PointUsage> pointUsages = new ArrayList<>();
 
+    @Builder
+    public PointDetail(long amount, User user) {
+        this.amount = amount;
+        this.remainAmount = amount;
+        this.user = user;
+        this.expiredAt = LocalDateTime.now().plusMonths(1);
+
+    }
+
     public Long use(Long point) {
         if (this.remainAmount <= 0) {
             return 0L;
@@ -43,8 +50,7 @@ public class PointDetail {
         return consumedAmount;
     }
 
-    public Long refund(Long amount) {
-        LocalDateTime now = LocalDateTime.now();
+    public Long refund(Long amount, LocalDateTime now) {
 
         LocalDateTime expiredAt = this.expiredAt;
 
