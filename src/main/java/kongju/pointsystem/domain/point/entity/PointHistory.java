@@ -10,10 +10,8 @@ import lombok.*;
 
 
 @Entity
-@Builder
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "point_histories")
 public class PointHistory {
     @Id
@@ -28,7 +26,22 @@ public class PointHistory {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     private UUID referenceId;
-    @Builder.Default
     @OneToMany(mappedBy = "pointHistory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PointUsage> pointUsages = new ArrayList<>();
+
+    @Builder
+    public PointHistory(PointType type, long amount, User user, UUID referenceId) {
+        this.type = type;
+        this.amount = amount;
+        this.user = user;
+        this.referenceId = referenceId;
+    }
+
+    @Builder
+    public PointHistory(PointType type, long amount, User user) {
+        this.type = type;
+        this.amount = amount;
+        this.user = user;
+
+    }
 }
