@@ -35,11 +35,9 @@ public class UserService {
 
         // 비밀번호 암호화 저장
         // 유저 생성
-        User user = User.builder()
-                .email(email)
-                .password(passwordEncoder.encode(password))
-                .name(name)
-                .build();
+        String encodedPassword = passwordEncoder.encode(request.password());
+        User user = User.createUser(email,encodedPassword, name);
+
         userRepository.save(user);
 
         return UserCreateResponse.builder()

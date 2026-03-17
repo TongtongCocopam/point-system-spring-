@@ -1,6 +1,7 @@
 package kongju.pointsystem.domain.user.entity;
 
 import jakarta.persistence.*;
+import kongju.pointsystem.domain.user.dto.UserCreateRequest;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,9 +30,28 @@ public class User {
         this.email = email;
         this.password = password;
         this.name = name;
-        this.userBalance = UserBalance.builder().
-                totalAmount(0L)
-                .user(this)
+    }
+
+    public void assignBalance(UserBalance userBalance) {
+        this.userBalance = userBalance;
+        if(userBalance.getUser() != this){
+            userBalance.updateUser(this);
+        }
+    }
+
+    public static User createUser(String email, String password, String name){
+        User user = User.builder()
+                .email(email)
+                .password(password)
+                .name(name)
                 .build();
+
+        UserBalance balance = UserBalance.builder()
+                .totalAmount(0L)
+                .user(user)
+                .build();
+        user.assignBalance(balance);
+
+        return user;
     }
 }

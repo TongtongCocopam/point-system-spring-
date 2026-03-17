@@ -27,6 +27,12 @@ public class UserBalance {
         this.user = user;
     }
 
+    public void updateUser(User user) {
+        if(this.user != user) {
+            this.user = user;
+        }
+    }
+
     public void earn(Long point) {
         this.totalAmount += point;
     }
