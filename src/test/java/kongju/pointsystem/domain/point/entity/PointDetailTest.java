@@ -14,7 +14,7 @@ import kongju.pointsystem.support.UserFixture;
 public class PointDetailTest {
     @Test
     @DisplayName("포인트 사용 시 잔액 정상 차감")
-    void reduce_remainAmount_when_points_are_used() {
+    void should_reduce_remainAmount_when_points_are_used() {
         User user = UserFixture.create();
 
         PointDetail pointDetail = PointDetail.builder()
@@ -28,7 +28,7 @@ public class PointDetailTest {
 
     @Test
     @DisplayName("요청이 잔액보다 클 때 잔액 만큼 소진")
-    void consume_remainAmount_when_request_exceeds_balance() {
+    void should_consume_remainAmount_when_request_exceeds_balance() {
         User user = UserFixture.create();
 
         PointDetail pointDetail = PointDetail.builder()
@@ -42,7 +42,7 @@ public class PointDetailTest {
 
     @Test
     @DisplayName("생성 시 만료일이 1달 뒤로 설정됨")
-    void set_expiredAt_to_one_month_later_on_creation() {
+    void should_set_expiredAt_to_one_month_later_on_creation() {
         User user = UserFixture.create();
 
         PointDetail pointDetail = PointDetail.builder()
@@ -58,7 +58,7 @@ public class PointDetailTest {
 
     @Test
     @DisplayName("만료된 포인트 환불 시 0원 반환")
-    void return_zero_refund_amount_when_point_is_expired() {
+    void should_return_zero_refund_amount_when_point_is_expired() {
         User user = UserFixture.create();
 
         PointDetail pointDetail = PointDetail.builder()
@@ -78,7 +78,7 @@ public class PointDetailTest {
 
     @Test
     @DisplayName("만료 전 환불 시 잔액 복구")
-    void increase_remainAmount_when_refunded_before_expiry() {
+    void should_increase_remainAmount_when_refunded_before_expiry() {
         User user = UserFixture.create();
 
         PointDetail pointDetail = PointDetail.builder()
