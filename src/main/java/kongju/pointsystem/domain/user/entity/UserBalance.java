@@ -10,9 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "user_balances")
 public class UserBalance {
     @Id
@@ -22,6 +20,12 @@ public class UserBalance {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
     private User user;
+
+    @Builder
+    public UserBalance(long totalAmount, User user) {
+        this.totalAmount = totalAmount;
+        this.user = user;
+    }
 
     public void earn(Long point) {
         this.totalAmount += point;

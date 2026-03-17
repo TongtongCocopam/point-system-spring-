@@ -21,7 +21,6 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final UserBalanceRepository userBalanceRepository;
 
     public UserCreateResponse createUser(UserCreateRequest request) {
 
@@ -42,12 +41,6 @@ public class UserService {
                 .name(name)
                 .build();
         userRepository.save(user);
-
-        UserBalance userBalance = UserBalance.builder()
-                .user(user)
-                .totalAmount(0L)
-                .build();
-        userBalanceRepository.save(userBalance);
 
         return UserCreateResponse.builder()
                 .email(email)
