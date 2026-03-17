@@ -3,11 +3,7 @@ package kongju.pointsystem.domain.point.service;
 import java.util.Optional;
 import java.util.UUID;
 
-import kongju.pointsystem.domain.point.entity.PointDetail;
-import kongju.pointsystem.domain.point.entity.PointHistory;
-import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
-import kongju.pointsystem.domain.point.repository.PointUsageRepository;
-import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -27,7 +23,12 @@ import kongju.pointsystem.domain.user.entity.User;
 import kongju.pointsystem.support.UserFixture;
 import kongju.pointsystem.domain.point.repository.PointDetailRepository;
 import kongju.pointsystem.domain.user.repository.UserRepository;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import kongju.pointsystem.domain.point.entity.PointDetail;
+import kongju.pointsystem.domain.point.entity.PointHistory;
+import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
+import kongju.pointsystem.domain.point.repository.PointUsageRepository;
+import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
+import kongju.pointsystem.global.error.exception.InvalidPointAmountException;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -74,16 +75,14 @@ public class PointServiceTest {
     @DisplayName("0포인트를 적립했을 경우")
     void should_zero_point_earn_when_points_are_not_earned() {
         UUID userId = UUID.randomUUID();
-        User user = UserFixture.create();
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
 
         PointRequest request = new PointRequest(userId, 0L);
 
-        MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class, () -> {
+        InvalidPointAmountException exception = assertThrows(InvalidPointAmountException.class, () -> {
             pointService.earnPoint(request);
         });
 
         // 에러 메시지 확인
-        assertThat(exception.getMessage()).isEqualTo("적립 금액은 0보다 커야 합니다");
+        assertThat(exception.getMessage()).isEqualTo("잘못된 적립 금액입니다");
     }
 }

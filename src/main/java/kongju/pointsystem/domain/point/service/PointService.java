@@ -38,6 +38,9 @@ public class PointService {
         UUID userId = request.id();
         Long point = request.point();
 
+        if(point <= 0){
+            throw new InvalidPointAmountException();
+        }
         // id로 유저 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
