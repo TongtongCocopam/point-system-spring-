@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 
+import kongju.pointsystem.domain.point.dto.PointBalanceRequest;
+import kongju.pointsystem.domain.point.dto.PointBalanceResponse;
 import kongju.pointsystem.global.error.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,7 +62,7 @@ public class PointServiceTest {
 
         PointRequest request = new PointRequest(userId, 1000L);
 
-        pointService.earnPoint(request);
+        var response = pointService.earnPoint(request);
 
         // 포인트 디테일 생성
         verify(pointDetailRepository, times(1)).save(any(PointDetail.class));
@@ -70,6 +72,7 @@ public class PointServiceTest {
 
         // 유저 잔액 변경
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(1000L);
+        assertThat(response.currentBalance().equals(1000L));
     }
 
     @Test
@@ -114,5 +117,22 @@ public class PointServiceTest {
         });
 
         assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
+    }
+
+
+    @Test
+    @DisplayName("포인트가 성공적으로 조회될 경우")
+    void should_balance_success_when_points_Check() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        user.getUserBalance().earn(1000L);
+
+        PointBalanceRequest request = new PointBalanceRequest(userId, null);
+        PointBalanceResponse response = (PointBalanceResponse)pointService.balancePoint(request);
+
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(1000L);
+        assertThat(response.balance()).isEqualTo(1000L);
     }
 }

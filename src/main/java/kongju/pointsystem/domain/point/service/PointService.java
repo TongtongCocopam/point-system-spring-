@@ -98,15 +98,19 @@ public class PointService {
                 .orElseThrow(UserNotFoundException::new);
 
         // 유저 발란스가 있는지 확인 or 없으면 생성
-        UserBalance balance = balanceRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> UserBalance.builder()
-                        .user(user)
-                        .totalAmount(0L)
-                        .build());
+        UserBalance userBalance = user.getUserBalance();
+        if (userBalance == null) {
+            userBalance = UserBalance.builder()
+                    .totalAmount(0L)
+                    .user(user)
+                    .build();
+
+            user.assignBalance(userBalance);
+        }
 
         if (time == null) {
             return PointBalanceResponse.builder()
-                    .balance(balance.getTotalAmount())
+                    .balance(userBalance.getTotalAmount())
                     .build();
         }
 
