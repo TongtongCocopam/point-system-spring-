@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 
+import kongju.pointsystem.global.error.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -101,4 +102,17 @@ public class PointServiceTest {
         assertThat(exception.getMessage()).isEqualTo("잘못된 적립 금액입니다");
     }
 
+    @Test
+    @DisplayName("id가 없을 경우")
+    void should_find_id_when_not_exist(){
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+        PointRequest request = new PointRequest(userId, 500L);
+
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
+            pointService.earnPoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
+    }
 }
