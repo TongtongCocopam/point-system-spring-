@@ -1,21 +1,17 @@
 package kongju.pointsystem.domain.point.entity;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-import kongju.pointsystem.domain.user.entity.User;
-
-import java.util.UUID;
 
 @Entity
-@Builder
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Table(name = "point_usage")
 public class PointUsage {
     @Id
@@ -30,4 +26,10 @@ public class PointUsage {
     @JoinColumn(name = "point_history_id", nullable = false)
     private PointHistory pointHistory;
 
+    @Builder
+    public PointUsage(Long amount, PointDetail pointDetail, PointHistory pointHistory) {
+        this.amount = amount;
+        this.pointDetail = pointDetail;
+        this.pointHistory = pointHistory;
+    }
 }
