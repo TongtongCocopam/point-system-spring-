@@ -85,4 +85,20 @@ public class PointServiceTest {
         // 에러 메시지 확인
         assertThat(exception.getMessage()).isEqualTo("잘못된 적립 금액입니다");
     }
+
+    @Test
+    @DisplayName("음수를 적립했을 경우")
+    void should_negative_point_earn_when_points_are_not_earned() {
+        UUID userId = UUID.randomUUID();
+
+        PointRequest request = new PointRequest(userId, -500L);
+
+        InvalidPointAmountException exception = assertThrows(InvalidPointAmountException.class, () -> {
+            pointService.earnPoint(request);
+        });
+
+        // 에러 메시지 확인
+        assertThat(exception.getMessage()).isEqualTo("잘못된 적립 금액입니다");
+    }
+
 }
