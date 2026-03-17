@@ -1,7 +1,6 @@
 package kongju.pointsystem.domain.user.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,10 +8,8 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 @Entity
-@Builder
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "users")
 public class User {
     @Id
@@ -26,4 +23,15 @@ public class User {
     private String name;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserBalance userBalance;
+
+    @Builder
+    public User(String email, String password, String name) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.userBalance = UserBalance.builder().
+                totalAmount(0L)
+                .user(this)
+                .build();
+    }
 }
