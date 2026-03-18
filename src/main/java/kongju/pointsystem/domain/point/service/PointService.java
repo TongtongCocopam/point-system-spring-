@@ -120,6 +120,8 @@ public class PointService {
                 .mapToLong(PointDetail::getRemainAmount)
                 .sum();
 
+        userBalance.earn(totalAmount);
+
         return PointBalanceExpireResponse.builder()
                 .balance(totalAmount)
                 .expiredAt(time)

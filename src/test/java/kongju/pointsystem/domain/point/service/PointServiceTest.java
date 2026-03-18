@@ -1,12 +1,12 @@
 package kongju.pointsystem.domain.point.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 
-import kongju.pointsystem.domain.point.dto.PointBalanceRequest;
-import kongju.pointsystem.domain.point.dto.PointBalanceResponse;
-import kongju.pointsystem.global.error.exception.UserNotFoundException;
+import kongju.pointsystem.domain.point.dto.PointBalanceExpireResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -31,7 +32,10 @@ import kongju.pointsystem.domain.point.entity.PointHistory;
 import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
 import kongju.pointsystem.domain.point.repository.PointUsageRepository;
 import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
+import kongju.pointsystem.domain.point.dto.PointBalanceRequest;
+import kongju.pointsystem.domain.point.dto.PointBalanceResponse;
 import kongju.pointsystem.global.error.exception.InvalidPointAmountException;
+import kongju.pointsystem.global.error.exception.UserNotFoundException;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -106,7 +110,7 @@ public class PointServiceTest {
     }
 
     @Test
-    @DisplayName("id가 없을 경우")
+    @DisplayName("User가 존재하지 않는 경우")
     void should_find_id_when_not_exist(){
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(any())).thenReturn(Optional.empty());
@@ -135,4 +139,35 @@ public class PointServiceTest {
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(1000L);
         assertThat(response.balance()).isEqualTo(1000L);
     }
+
+    @Test
+    @DisplayName("만료 예정 시간을 넣은 경우")
+    void should_null_expiredAt_when_points_Check() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+
+        PointDetail detail1 = PointDetail.builder()
+                .amount(1000L)
+                .user(user)
+                .build();
+        PointDetail detail2 = PointDetail.builder()
+                .amount(1500L)
+                .user(user)
+                .build();
+
+        LocalDateTime future = LocalDateTime.now().plusMonths(1);
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        when(pointDetailRepository.findByPointExpire(eq(userId), eq(future)))
+                .thenReturn(List.of(detail1, detail2));
+
+        PointBalanceRequest request = new PointBalanceRequest(userId, future);
+
+        PointBalanceExpireResponse response = (PointBalanceExpireResponse)pointService.balancePoint(request);
+
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(2500L);
+        assertThat(response.expiredAt()).isEqualTo(future);
+    }
+    
 }
