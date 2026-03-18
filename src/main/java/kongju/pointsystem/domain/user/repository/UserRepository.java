@@ -10,8 +10,4 @@ import kongju.pointsystem.global.error.exception.UserNotFoundException;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(@Email String email);
-
-    default User findByIdOrThrow(UUID id){
-        return findById(id).orElseThrow(UserNotFoundException::new);
-    }
 }

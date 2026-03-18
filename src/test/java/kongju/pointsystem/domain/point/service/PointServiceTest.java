@@ -187,8 +187,15 @@ public class PointServiceTest {
 
     @Test
     @DisplayName("User가 존재하지 않는 경우")
-    void should_throw_UserNotFoundException_when_user_not_found() {
+    void should_throw_UserNotFoundException_when_balance_user_not_found() {
         UUID userId = UUID.randomUUID();
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+        PointBalanceRequest request = new PointBalanceRequest(userId, null);
 
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
+            pointService.balancePoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
     }
 }
