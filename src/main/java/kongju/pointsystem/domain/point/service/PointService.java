@@ -2,6 +2,7 @@ package kongju.pointsystem.domain.point.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +31,16 @@ public class PointService {
     private final PointUsageRepository pointUsageRepository;
 
     /**
+     * 유저 찾기, 없으면 에러 처리
+     *
+     * @param id 유저 아이디
+     * @return 유저 객체
+     */
+    private User findByIdOrThrow(UUID id) {
+        return userRepository.findById(id).orElseThrow(UserNotFoundException::new);
+    }
+
+    /**
      * 포인트 적립하는 서비스 로직
      *
      * @param request 사용자 id와 적립할 포인트
@@ -38,23 +49,14 @@ public class PointService {
         UUID userId = request.id();
         Long point = request.point();
 
-        if(point <= 0){
+        if (point <= 0) {
             throw new InvalidPointAmountException();
         }
         // id로 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = findByIdOrThrow(userId);
 
-        // 유저 발란스가 있는지 확인 or 없으면 생성
+        // 유저 발란스 가져오기
         UserBalance userBalance = user.getUserBalance();
-        if (userBalance == null) {
-            userBalance = UserBalance.builder()
-                    .totalAmount(0L)
-                    .user(user)
-                    .build();
-
-            user.assignBalance(userBalance);
-        }
 
         // 총 금액에 추가
         userBalance.earn(point);
@@ -94,27 +96,25 @@ public class PointService {
         UUID userId = request.id();
         LocalDateTime time = request.time();
         // id로 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = findByIdOrThrow(userId);
 
-        // 유저 발란스가 있는지 확인 or 없으면 생성
-        UserBalance balance = balanceRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> UserBalance.builder()
-                        .user(user)
-                        .totalAmount(0L)
-                        .build());
+        // 유저 발란스 확인
+        UserBalance userBalance = user.getUserBalance();
 
         if (time == null) {
             return PointBalanceResponse.builder()
-                    .balance(balance.getTotalAmount())
+                    .balance(userBalance.getTotalAmount())
                     .build();
         }
 
         List<PointDetail> pointDetailList = pointDetailRepository.findByPointExpire(userId, time);
+
         Long totalAmount = pointDetailList
                 .stream()
                 .mapToLong(PointDetail::getRemainAmount)
                 .sum();
+
+        userBalance.earn(totalAmount);
 
         return PointBalanceExpireResponse.builder()
                 .balance(totalAmount)
@@ -132,16 +132,13 @@ public class PointService {
         UUID userId = request.id();
         Long point = request.point();
 
+        if(point <= 0) throw new InvalidPointAmountException();
+
         // 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = findByIdOrThrow(userId);
 
         // 잔고 확인
-        UserBalance userBalance = userBalanceRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> UserBalance.builder()
-                        .user(user)
-                        .totalAmount(0L)
-                        .build());
+        UserBalance userBalance = user.getUserBalance();
 
         userBalance.use(point);
 
@@ -195,8 +192,7 @@ public class PointService {
         UUID userId = request.id();
         UUID referenceId = request.referenceId();
         // 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = findByIdOrThrow(userId);
 
         // 유효한 referenceId인지 확인
         boolean referenceIdExists = pointHistoryRepository.existsReferenceId(userId, referenceId);
@@ -248,7 +244,7 @@ public class PointService {
         pointHistoryRepository.save(pointHistoryRefund);
 
         // 총 잔액 수정
-        UserBalance userBalance = userBalanceRepository.findByUserId(userId);
+        UserBalance userBalance = user.getUserBalance();
         userBalance.refund(refundAmount);
 
         return PointRefundResponse.builder()
