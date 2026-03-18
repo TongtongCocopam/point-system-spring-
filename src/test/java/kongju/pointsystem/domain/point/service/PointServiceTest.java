@@ -198,4 +198,19 @@ public class PointServiceTest {
 
         assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
     }
+
+    @Test
+    @DisplayName("만료 예정 포인트를 확인할 날짜가 현재 날짜 이전인 경우")
+    void should_return_zero_when_check_date_is_in_the_past(){
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        LocalDateTime past = LocalDateTime.now().minusDays(1);
+        PointBalanceRequest request = new PointBalanceRequest(userId, past);
+
+        PointBalanceExpireResponse response = (PointBalanceExpireResponse)pointService.balancePoint(request);
+
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
+    }
 }

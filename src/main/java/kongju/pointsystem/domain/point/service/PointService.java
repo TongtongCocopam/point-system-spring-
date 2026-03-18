@@ -2,6 +2,7 @@ package kongju.pointsystem.domain.point.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -107,6 +108,7 @@ public class PointService {
         }
 
         List<PointDetail> pointDetailList = pointDetailRepository.findByPointExpire(userId, time);
+
         Long totalAmount = pointDetailList
                 .stream()
                 .mapToLong(PointDetail::getRemainAmount)
