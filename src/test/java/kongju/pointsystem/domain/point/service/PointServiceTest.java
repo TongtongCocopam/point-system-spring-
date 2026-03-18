@@ -417,4 +417,74 @@ public class PointServiceTest {
         assertThat(response.currentBalance()).isEqualTo(0L);
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
     }
+
+    @Test
+    @DisplayName("환불 금액과 만료된 금액이 있는경우")
+    void should_refund_success_when_some_points_expired(){
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        UUID referenceId = UUID.randomUUID();
+        PointDetail pointDetail1 = PointDetail.builder()
+                .amount(700L)
+                .user(user)
+                .build();
+
+        PointDetail pointDetail2 = PointDetail.builder()
+                .amount(300L)
+                .user(user)
+                .build();
+
+        ReflectionTestUtils.setField(pointDetail1, "expiredAt", LocalDateTime.now().minusDays(10));
+
+        PointHistory useHistory = PointHistory.builder()
+                .referenceId(referenceId)
+                .type(PointType.USE)
+                .user(user)
+                .amount(1000L)
+                .referenceId(referenceId)
+                .build();
+
+        PointUsage pointUsage1 = PointUsage.builder()
+                .pointHistory(useHistory)
+                .pointDetail(pointDetail1)
+                .amount(700L)
+                .build();
+        PointUsage pointUsage2 = PointUsage.builder()
+                .pointHistory(useHistory)
+                .pointDetail(pointDetail2)
+                .amount(300L)
+                .build();
+
+        useHistory.getPointUsages().add(pointUsage1);
+        useHistory.getPointUsages().add(pointUsage2);
+
+        when(pointHistoryRepository.existsReferenceId(userId, referenceId)).thenReturn(true);
+        when(pointHistoryRepository.findRefundablePoints(userId, referenceId)).thenReturn(useHistory);
+
+        RefundRequest request = new RefundRequest(userId, referenceId);
+        PointRefundResponse response = pointService.refundPoint(request);
+
+        assertThat(response.currentBalance()).isEqualTo(300L);
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(300L);
+    }
+
+    @Test
+    @DisplayName("User가 존재하지 않는 경우")
+    void should_refund_fail_when_user_not_found(){
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+
+        UUID referenceId = UUID.randomUUID();
+        RefundRequest request = new RefundRequest(userId, referenceId);
+
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
+            pointService.refundPoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
+    }
+
 }
