@@ -37,6 +37,7 @@ import kongju.pointsystem.domain.point.repository.PointUsageRepository;
 import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
 import kongju.pointsystem.global.error.exception.InvalidPointAmountException;
 import kongju.pointsystem.global.error.exception.UserNotFoundException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -362,5 +363,58 @@ public class PointServiceTest {
         assertThat(response.currentBalance()).isEqualTo(1000L);
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(1000L);
 
+    }
+
+    @Test
+    @DisplayName("환불 금액이 만료되어 아예 없는경우")
+    void should_refund_failure_when_all_points_expired(){
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        UUID referenceId = UUID.randomUUID();
+        PointDetail pointDetail1 = PointDetail.builder()
+                .amount(700L)
+                .user(user)
+                .build();
+
+        PointDetail pointDetail2 = PointDetail.builder()
+                .amount(300L)
+                .user(user)
+                .build();
+
+        ReflectionTestUtils.setField(pointDetail1, "expiredAt", LocalDateTime.now().minusDays(10));
+        ReflectionTestUtils.setField(pointDetail2, "expiredAt", LocalDateTime.now().minusDays(10));
+
+        PointHistory useHistory = PointHistory.builder()
+                .referenceId(referenceId)
+                .type(PointType.USE)
+                .user(user)
+                .amount(1000L)
+                .referenceId(referenceId)
+                .build();
+
+        PointUsage pointUsage1 = PointUsage.builder()
+                .pointHistory(useHistory)
+                .pointDetail(pointDetail1)
+                .amount(700L)
+                .build();
+        PointUsage pointUsage2 = PointUsage.builder()
+                .pointHistory(useHistory)
+                .pointDetail(pointDetail2)
+                .amount(300L)
+                .build();
+
+        useHistory.getPointUsages().add(pointUsage1);
+        useHistory.getPointUsages().add(pointUsage2);
+
+        when(pointHistoryRepository.existsReferenceId(userId, referenceId)).thenReturn(true);
+        when(pointHistoryRepository.findRefundablePoints(userId, referenceId)).thenReturn(useHistory);
+
+        RefundRequest request = new RefundRequest(userId, referenceId);
+        PointRefundResponse response = pointService.refundPoint(request);
+
+        assertThat(response.currentBalance()).isEqualTo(0L);
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
     }
 }
