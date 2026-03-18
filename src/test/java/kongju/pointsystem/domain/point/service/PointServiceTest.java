@@ -11,6 +11,7 @@ import kongju.pointsystem.domain.point.entity.PointType;
 import kongju.pointsystem.domain.point.entity.PointUsage;
 import kongju.pointsystem.domain.user.entity.UserBalance;
 import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
+import kongju.pointsystem.global.error.exception.RefundReferenceIdNotExsistException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -486,5 +487,25 @@ public class PointServiceTest {
 
         assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
     }
+
+    @Test
+    @DisplayName("referenceId가 유효하지 않은 경우")
+    void should_refund_fail_when_reference_id_invalid(){
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        UUID referenceId = UUID.randomUUID();
+        when(pointHistoryRepository.existsReferenceId(userId, referenceId)).thenReturn(false);
+
+        RefundRequest request = new RefundRequest(userId, referenceId);
+
+        RefundReferenceIdNotExsistException exception = assertThrows(RefundReferenceIdNotExsistException.class, () -> {
+            pointService.refundPoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("존재하지 않는 영수증 번호 입니다");
+    }
+
 
 }
