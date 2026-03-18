@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kongju.pointsystem.domain.point.dto.PointEarnResponse;
 import kongju.pointsystem.domain.point.dto.PointRequest;
 import kongju.pointsystem.domain.point.service.PointService;
+import kongju.pointsystem.global.error.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 
 import static org.mockito.ArgumentMatchers.any;
@@ -57,4 +59,21 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.error").isEmpty());
     }
 
+    @Test
+    @DisplayName("POST /api/v1/points/earn - 실패 : 잘못된 요청 금액")
+    void earn_fail_invalid_amount() throws Exception {
+        ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
+
+        PointRequest request = new PointRequest(UUID.randomUUID(), -1000L);
+
+        mockMvc.perform(post("/api/v1/points/earn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value("G001"))
+                .andExpect(jsonPath("$.error.message").value("{valid.point.positive}"));
+
+    }
 }
