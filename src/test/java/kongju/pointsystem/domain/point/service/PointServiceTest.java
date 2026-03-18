@@ -296,4 +296,18 @@ public class PointServiceTest {
 
         assertThat(exception.getMessage()).isEqualTo("잘못된 적립 금액입니다");
     }
+
+    @Test
+    @DisplayName("use : User가 존재하지 않는 경우")
+    void should_throw_User_Not_Enough_exception_when_point_use_user_not_found() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+        PointRequest request = new PointRequest(userId, 100L);
+
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
+            pointService.usePoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
+    }
 }
