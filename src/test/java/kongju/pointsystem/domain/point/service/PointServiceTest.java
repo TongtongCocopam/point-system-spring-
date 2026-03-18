@@ -10,8 +10,7 @@ import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.point.entity.PointType;
 import kongju.pointsystem.domain.point.entity.PointUsage;
 import kongju.pointsystem.domain.user.entity.UserBalance;
-import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
-import kongju.pointsystem.global.error.exception.RefundReferenceIdNotExsistException;
+import kongju.pointsystem.global.error.exception.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -36,8 +35,6 @@ import kongju.pointsystem.domain.point.entity.PointHistory;
 import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
 import kongju.pointsystem.domain.point.repository.PointUsageRepository;
 import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
-import kongju.pointsystem.global.error.exception.InvalidPointAmountException;
-import kongju.pointsystem.global.error.exception.UserNotFoundException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
@@ -505,6 +502,27 @@ public class PointServiceTest {
         });
 
         assertThat(exception.getMessage()).isEqualTo("존재하지 않는 영수증 번호 입니다");
+    }
+
+
+    @Test
+    @DisplayName("환불이 이미 처리된 경우")
+    void should_refund_fail_when_already_processed(){
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        UUID referenceId = UUID.randomUUID();
+        when(pointHistoryRepository.existsReferenceId(userId, referenceId)).thenReturn(true);
+        when(pointHistoryRepository.findRefundPoints(userId, referenceId)).thenReturn(true);
+
+        RefundRequest request = new RefundRequest(userId, referenceId);
+
+        RefundAlreadyProcessedException exception = assertThrows(RefundAlreadyProcessedException.class, () -> {
+            pointService.refundPoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("이미 환불 처리되었습니다");
     }
 
 
