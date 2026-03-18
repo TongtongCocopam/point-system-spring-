@@ -132,6 +132,8 @@ public class PointService {
         UUID userId = request.id();
         Long point = request.point();
 
+        if(point <= 0) throw new InvalidPointAmountException();
+
         // 유저 확인
         User user = findByIdOrThrow(userId);
 

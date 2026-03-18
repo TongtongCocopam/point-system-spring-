@@ -281,7 +281,19 @@ public class PointServiceTest {
         assertThat(pointDetail1.getRemainAmount()).isEqualTo(0L);
         assertThat(pointDetail2.getRemainAmount()).isEqualTo(0L);
         assertThat(response.currentBalance()).isEqualTo(0L);
-
     }
 
+    @Test
+    @DisplayName("use : 음수 잔액 차감")
+    void should_not_valid_point_when_point_negative() {
+        UUID userId = UUID.randomUUID();
+
+        PointRequest request = new PointRequest(userId, -10L);
+
+        InvalidPointAmountException exception =  assertThrows(InvalidPointAmountException.class, () -> {
+            pointService.usePoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("잘못된 적립 금액입니다");
+    }
 }
