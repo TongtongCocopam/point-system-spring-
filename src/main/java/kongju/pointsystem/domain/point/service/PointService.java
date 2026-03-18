@@ -42,19 +42,18 @@ public class PointService {
             throw new InvalidPointAmountException();
         }
         // id로 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findByIdOrThrow(userId);
 
-        // 유저 발란스가 있는지 확인 or 없으면 생성
+        // 유저 발란스 가져오기
         UserBalance userBalance = user.getUserBalance();
-        if (userBalance == null) {
-            userBalance = UserBalance.builder()
-                    .totalAmount(0L)
-                    .user(user)
-                    .build();
-
-            user.assignBalance(userBalance);
-        }
+//        if (userBalance == null) {
+//            userBalance = UserBalance.builder()
+//                    .totalAmount(0L)
+//                    .user(user)
+//                    .build();
+//
+//            user.assignBalance(userBalance);
+//        }
 
         // 총 금액에 추가
         userBalance.earn(point);
@@ -94,19 +93,18 @@ public class PointService {
         UUID userId = request.id();
         LocalDateTime time = request.time();
         // id로 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findByIdOrThrow(userId);
 
-        // 유저 발란스가 있는지 확인 or 없으면 생성
+        // 유저 발란스 확인
         UserBalance userBalance = user.getUserBalance();
-        if (userBalance == null) {
-            userBalance = UserBalance.builder()
-                    .totalAmount(0L)
-                    .user(user)
-                    .build();
-
-            user.assignBalance(userBalance);
-        }
+//        if (userBalance == null) {
+//            userBalance = UserBalance.builder()
+//                    .totalAmount(0L)
+//                    .user(user)
+//                    .build();
+//
+//            user.assignBalance(userBalance);
+//        }
 
         if (time == null) {
             return PointBalanceResponse.builder()
@@ -139,15 +137,10 @@ public class PointService {
         Long point = request.point();
 
         // 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findByIdOrThrow(userId);
 
         // 잔고 확인
-        UserBalance userBalance = userBalanceRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> UserBalance.builder()
-                        .user(user)
-                        .totalAmount(0L)
-                        .build());
+        UserBalance userBalance = user.getUserBalance();
 
         userBalance.use(point);
 
@@ -201,8 +194,7 @@ public class PointService {
         UUID userId = request.id();
         UUID referenceId = request.referenceId();
         // 유저 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        User user = userRepository.findByIdOrThrow(userId);
 
         // 유효한 referenceId인지 확인
         boolean referenceIdExists = pointHistoryRepository.existsReferenceId(userId, referenceId);
@@ -254,7 +246,7 @@ public class PointService {
         pointHistoryRepository.save(pointHistoryRefund);
 
         // 총 잔액 수정
-        UserBalance userBalance = userBalanceRepository.findByUserId(userId);
+        UserBalance userBalance = user.getUserBalance();
         userBalance.refund(refundAmount);
 
         return PointRefundResponse.builder()

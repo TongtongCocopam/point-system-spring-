@@ -184,5 +184,11 @@ public class PointServiceTest {
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
         assertThat(response.balance()).isEqualTo(0L);
     }
-    
+
+    @Test
+    @DisplayName("User가 존재하지 않는 경우")
+    void should_throw_UserNotFoundException_when_user_not_found() {
+        UUID userId = UUID.randomUUID();
+
+    }
 }
