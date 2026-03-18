@@ -6,7 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-import kongju.pointsystem.domain.point.dto.PointBalanceExpireResponse;
+import kongju.pointsystem.domain.point.dto.*;
+import kongju.pointsystem.domain.user.entity.UserBalance;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -22,7 +23,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
-import kongju.pointsystem.domain.point.dto.PointRequest;
 import kongju.pointsystem.domain.user.entity.User;
 import kongju.pointsystem.support.UserFixture;
 import kongju.pointsystem.domain.point.repository.PointDetailRepository;
@@ -32,8 +32,6 @@ import kongju.pointsystem.domain.point.entity.PointHistory;
 import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
 import kongju.pointsystem.domain.point.repository.PointUsageRepository;
 import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
-import kongju.pointsystem.domain.point.dto.PointBalanceRequest;
-import kongju.pointsystem.domain.point.dto.PointBalanceResponse;
 import kongju.pointsystem.global.error.exception.InvalidPointAmountException;
 import kongju.pointsystem.global.error.exception.UserNotFoundException;
 
@@ -56,7 +54,7 @@ public class PointServiceTest {
     private PointService pointService;
 
     @Test
-    @DisplayName("포인트를 성공적으로 적립했을 경우")
+    @DisplayName("earn : 포인트를 성공적으로 적립했을 경우")
     void should_earn_sucess_when_points_are_earned() {
 
         UUID userId = UUID.randomUUID();
@@ -80,7 +78,7 @@ public class PointServiceTest {
     }
 
     @Test
-    @DisplayName("0포인트를 적립했을 경우")
+    @DisplayName("earn : 0포인트를 적립했을 경우")
     void should_zero_point_earn_when_points_are_not_earned() {
         UUID userId = UUID.randomUUID();
 
@@ -95,7 +93,7 @@ public class PointServiceTest {
     }
 
     @Test
-    @DisplayName("음수를 적립했을 경우")
+    @DisplayName("earn : 음수를 적립했을 경우")
     void should_negative_point_earn_when_points_are_not_earned() {
         UUID userId = UUID.randomUUID();
 
@@ -110,8 +108,8 @@ public class PointServiceTest {
     }
 
     @Test
-    @DisplayName("User가 존재하지 않는 경우")
-    void should_find_id_when_not_exist(){
+    @DisplayName("earn : User가 존재하지 않는 경우")
+    void should_find_id_when_not_exist() {
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(any())).thenReturn(Optional.empty());
         PointRequest request = new PointRequest(userId, 500L);
@@ -125,7 +123,7 @@ public class PointServiceTest {
 
 
     @Test
-    @DisplayName("포인트가 성공적으로 조회될 경우")
+    @DisplayName("balance : 포인트가 성공적으로 조회될 경우")
     void should_balance_success_when_points_Check() {
         UUID userId = UUID.randomUUID();
         User user = UserFixture.create();
@@ -134,14 +132,14 @@ public class PointServiceTest {
         user.getUserBalance().earn(1000L);
 
         PointBalanceRequest request = new PointBalanceRequest(userId, null);
-        PointBalanceResponse response = (PointBalanceResponse)pointService.balancePoint(request);
+        PointBalanceResponse response = (PointBalanceResponse) pointService.balancePoint(request);
 
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(1000L);
         assertThat(response.balance()).isEqualTo(1000L);
     }
 
     @Test
-    @DisplayName("만료 예정 시간을 넣은 경우")
+    @DisplayName("balance : 만료 예정 시간을 넣은 경우")
     void should_null_expiredAt_when_points_Check() {
         UUID userId = UUID.randomUUID();
         User user = UserFixture.create();
@@ -164,14 +162,14 @@ public class PointServiceTest {
 
         PointBalanceRequest request = new PointBalanceRequest(userId, future);
 
-        PointBalanceExpireResponse response = (PointBalanceExpireResponse)pointService.balancePoint(request);
+        PointBalanceExpireResponse response = (PointBalanceExpireResponse) pointService.balancePoint(request);
 
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(2500L);
         assertThat(response.expiredAt()).isEqualTo(future);
     }
 
     @Test
-    @DisplayName("포인트가 없는경우")
+    @DisplayName("balance : 포인트가 없는경우")
     void should_return_zero_point_when_points_not_exist() {
         UUID userId = UUID.randomUUID();
         User user = UserFixture.create();
@@ -179,14 +177,14 @@ public class PointServiceTest {
 
         PointBalanceRequest request = new PointBalanceRequest(userId, null);
 
-        PointBalanceResponse response = (PointBalanceResponse)pointService.balancePoint(request);
+        PointBalanceResponse response = (PointBalanceResponse) pointService.balancePoint(request);
 
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
         assertThat(response.balance()).isEqualTo(0L);
     }
 
     @Test
-    @DisplayName("User가 존재하지 않는 경우")
+    @DisplayName("balance : User가 존재하지 않는 경우")
     void should_throw_UserNotFoundException_when_balance_user_not_found() {
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(any())).thenReturn(Optional.empty());
@@ -200,8 +198,8 @@ public class PointServiceTest {
     }
 
     @Test
-    @DisplayName("만료 예정 포인트를 확인할 날짜가 현재 날짜 이전인 경우")
-    void should_return_zero_when_check_date_is_in_the_past(){
+    @DisplayName("balance : 만료 예정 포인트를 확인할 날짜가 현재 날짜 이전인 경우")
+    void should_return_zero_when_check_date_is_in_the_past() {
         UUID userId = UUID.randomUUID();
         User user = UserFixture.create();
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
@@ -209,8 +207,37 @@ public class PointServiceTest {
         LocalDateTime past = LocalDateTime.now().minusDays(1);
         PointBalanceRequest request = new PointBalanceRequest(userId, past);
 
-        PointBalanceExpireResponse response = (PointBalanceExpireResponse)pointService.balancePoint(request);
+        PointBalanceExpireResponse response = (PointBalanceExpireResponse) pointService.balancePoint(request);
 
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
     }
+
+    @Test
+    @DisplayName("use : 잔액이 1원 더 많은 경우")
+    void should_use_success_when_balance_enough() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.createWithBalance(2500L);
+        UserBalance userBalance = user.getUserBalance();
+
+        PointDetail pointDetail1 = PointDetail.builder()
+                .user(user)
+                .amount(1000)
+                .build();
+        PointDetail pointDetail2 = PointDetail.builder()
+                .user(user)
+                .amount(1500)
+                .build();
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        when(pointDetailRepository.findRemainedDetailsNotExpired(eq(userId), any())).thenReturn(List.of(pointDetail1, pointDetail2));
+
+        PointRequest request = new PointRequest(userId, 2499L);
+        PointUseResponse response = pointService.usePoint(request);
+
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(1L);
+        assertThat(pointDetail1.getRemainAmount()).isEqualTo(0L);
+        assertThat(pointDetail2.getRemainAmount()).isEqualTo(1L);
+        assertThat(response.currentBalance()).isEqualTo(1L);
+    }
+
 }

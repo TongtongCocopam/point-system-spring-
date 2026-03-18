@@ -19,4 +19,20 @@ public class UserFixture {
         user.assignBalance(userBalance);
         return user;
     }
+
+    public static User createWithBalance(Long balance) {
+        User user = User.builder()
+                .email("test@gmail.com")
+                .name("tester")
+                .password("test1234")
+                .build();
+
+        UserBalance userBalance = UserBalance.builder()
+                .user(user)
+                .totalAmount(balance)
+                .build();
+
+        user.assignBalance(userBalance);
+        return user;
+    }
 }
