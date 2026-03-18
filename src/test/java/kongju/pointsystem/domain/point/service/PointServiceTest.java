@@ -169,5 +169,20 @@ public class PointServiceTest {
         assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(2500L);
         assertThat(response.expiredAt()).isEqualTo(future);
     }
+
+    @Test
+    @DisplayName("포인트가 없는경우")
+    void should_return_zero_point_when_points_not_exist() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        PointBalanceRequest request = new PointBalanceRequest(userId, null);
+
+        PointBalanceResponse response = (PointBalanceResponse)pointService.balancePoint(request);
+
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
+        assertThat(response.balance()).isEqualTo(0L);
+    }
     
 }
