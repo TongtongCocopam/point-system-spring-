@@ -7,6 +7,8 @@ import java.util.UUID;
 
 
 import kongju.pointsystem.domain.point.dto.*;
+import kongju.pointsystem.domain.point.entity.PointType;
+import kongju.pointsystem.domain.point.entity.PointUsage;
 import kongju.pointsystem.domain.user.entity.UserBalance;
 import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 import org.junit.jupiter.api.DisplayName;
@@ -290,7 +292,7 @@ public class PointServiceTest {
 
         PointRequest request = new PointRequest(userId, -10L);
 
-        InvalidPointAmountException exception =  assertThrows(InvalidPointAmountException.class, () -> {
+        InvalidPointAmountException exception = assertThrows(InvalidPointAmountException.class, () -> {
             pointService.usePoint(request);
         });
 
@@ -309,5 +311,56 @@ public class PointServiceTest {
         });
 
         assertThat(exception.getMessage()).isEqualTo("존재하지 않는 계정입니다");
+    }
+
+    @Test
+    @DisplayName("refund : 환불 성공 케이스")
+    void should_success_refund_point_when_point_use_user_found() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.create();
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        UUID referenceId = UUID.randomUUID();
+        PointDetail pointDetail1 = PointDetail.builder()
+                .amount(700L)
+                .user(user)
+                .build();
+
+        PointDetail pointDetail2 = PointDetail.builder()
+                .amount(300L)
+                .user(user)
+                .build();
+
+        PointHistory useHistory = PointHistory.builder()
+                .referenceId(referenceId)
+                .type(PointType.USE)
+                .user(user)
+                .amount(1000L)
+                .referenceId(referenceId)
+                .build();
+
+        PointUsage pointUsage1 = PointUsage.builder()
+                .pointHistory(useHistory)
+                .pointDetail(pointDetail1)
+                .amount(700L)
+                .build();
+        PointUsage pointUsage2 = PointUsage.builder()
+                .pointHistory(useHistory)
+                .pointDetail(pointDetail2)
+                .amount(300L)
+                .build();
+
+        useHistory.getPointUsages().add(pointUsage1);
+        useHistory.getPointUsages().add(pointUsage2);
+
+        when(pointHistoryRepository.existsReferenceId(userId, referenceId)).thenReturn(true);
+        when(pointHistoryRepository.findRefundablePoints(userId, referenceId)).thenReturn(useHistory);
+
+        RefundRequest request = new RefundRequest(userId, referenceId);
+        PointRefundResponse response = pointService.refundPoint(request);
+
+        assertThat(response.currentBalance()).isEqualTo(1000L);
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(1000L);
+
     }
 }
