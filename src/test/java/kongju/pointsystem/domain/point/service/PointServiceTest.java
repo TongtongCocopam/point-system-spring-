@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.user.entity.UserBalance;
+import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -217,7 +218,6 @@ public class PointServiceTest {
     void should_use_success_when_balance_enough() {
         UUID userId = UUID.randomUUID();
         User user = UserFixture.createWithBalance(2500L);
-        UserBalance userBalance = user.getUserBalance();
 
         PointDetail pointDetail1 = PointDetail.builder()
                 .user(user)
@@ -238,6 +238,22 @@ public class PointServiceTest {
         assertThat(pointDetail1.getRemainAmount()).isEqualTo(0L);
         assertThat(pointDetail2.getRemainAmount()).isEqualTo(1L);
         assertThat(response.currentBalance()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("use : 잔액이 부족한 경우 ")
+    void should_throw_Balance_Not_Enough_exception_when_balance_not_enough() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.createWithBalance(1000L);
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+
+        PointRequest request = new PointRequest(userId, 1001L);
+        BalanceNotEnoughException exception = assertThrows(BalanceNotEnoughException.class, () -> {
+            pointService.usePoint(request);
+        });
+
+        assertThat(exception.getMessage()).isEqualTo("포인트 잔액이 부족합니다");
     }
 
 }
