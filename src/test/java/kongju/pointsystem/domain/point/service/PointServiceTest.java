@@ -256,4 +256,32 @@ public class PointServiceTest {
         assertThat(exception.getMessage()).isEqualTo("포인트 잔액이 부족합니다");
     }
 
+    @Test
+    @DisplayName("use : 잔액과 사용 금액이 일치하는 경우")
+    void should_sucess_use_point_when_balance_enough() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFixture.createWithBalance(2500L);
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        PointDetail pointDetail1 = PointDetail.builder()
+                .user(user)
+                .amount(1000)
+                .build();
+        PointDetail pointDetail2 = PointDetail.builder()
+                .user(user)
+                .amount(1500)
+                .build();
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        when(pointDetailRepository.findRemainedDetailsNotExpired(eq(userId), any())).thenReturn(List.of(pointDetail1, pointDetail2));
+
+        PointRequest request = new PointRequest(userId, 2500L);
+        PointUseResponse response = pointService.usePoint(request);
+
+        assertThat(user.getUserBalance().getTotalAmount()).isEqualTo(0L);
+        assertThat(pointDetail1.getRemainAmount()).isEqualTo(0L);
+        assertThat(pointDetail2.getRemainAmount()).isEqualTo(0L);
+        assertThat(response.currentBalance()).isEqualTo(0L);
+
+    }
+
 }
