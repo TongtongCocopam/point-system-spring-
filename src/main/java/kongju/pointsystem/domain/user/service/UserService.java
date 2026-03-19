@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import kongju.pointsystem.domain.user.dto.UserCreateResponse;
 import kongju.pointsystem.domain.user.entity.User;
-import kongju.pointsystem.domain.user.entity.UserBalance;
-import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
 import kongju.pointsystem.domain.user.repository.UserRepository;
 import kongju.pointsystem.global.error.exception.EmailDuplicatedException;
 
@@ -35,7 +33,7 @@ public class UserService {
 
         // 비밀번호 암호화 저장
         // 유저 생성
-        String encodedPassword = passwordEncoder.encode(request.password());
+        String encodedPassword = passwordEncoder.encode(password);
         User user = User.createUser(email,encodedPassword, name);
 
         userRepository.save(user);

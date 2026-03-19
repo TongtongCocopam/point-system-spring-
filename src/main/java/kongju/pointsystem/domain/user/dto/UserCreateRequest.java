@@ -3,7 +3,9 @@ package kongju.pointsystem.domain.user.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 
+@Builder
 public record UserCreateRequest(
         @NotBlank(message = "{valid.email.required}")
         @Email(message = "{valid.email.format}")
