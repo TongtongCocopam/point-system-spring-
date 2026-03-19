@@ -1,8 +1,10 @@
 package kongju.pointsystem.domain.point.controller;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kongju.pointsystem.domain.point.dto.PointBalanceExpireResponse;
 import kongju.pointsystem.domain.point.dto.PointBalanceRequest;
 import kongju.pointsystem.domain.point.dto.PointEarnResponse;
 import kongju.pointsystem.domain.point.dto.PointRequest;
@@ -98,6 +100,26 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
                 .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
 
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/points/balance - 조회 성공")
+    void balance_success() throws Exception {
+        LocalDateTime time = LocalDateTime.now().plusMonths(1);
+        PointBalanceExpireResponse response = PointBalanceExpireResponse.builder()
+                .balance(1000L)
+                .expiredAt(time)
+                .build();
+
+        when(pointService.balancePoint(any())).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/points/balance")
+                        .param("id", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data['잔액']").value(1000))
+                .andExpect(jsonPath("$.data['만료 예정일']").exists());
     }
 
     @Test
