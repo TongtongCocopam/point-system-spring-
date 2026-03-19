@@ -2,6 +2,7 @@ package kongju.pointsystem.domain.user.service;
 
 import jakarta.validation.constraints.Email;
 import kongju.pointsystem.domain.user.dto.UserCreateRequest;
+import kongju.pointsystem.global.error.exception.EmptyFieldException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,11 @@ public class UserService {
         String name = request.name();
         String password = request.password();
 
+        if (email == null || password == null || name == null ||
+                email.isBlank() || password.isBlank() || name.isBlank()) {
+            throw new EmptyFieldException();
+        }
+
         //이메일 중복 확인
         if (userRepository.existsByEmail(email)) {
             throw new EmailDuplicatedException();
@@ -34,7 +40,7 @@ public class UserService {
         // 비밀번호 암호화 저장
         // 유저 생성
         String encodedPassword = passwordEncoder.encode(password);
-        User user = User.createUser(email,encodedPassword, name);
+        User user = User.createUser(email, encodedPassword, name);
 
         userRepository.save(user);
 
