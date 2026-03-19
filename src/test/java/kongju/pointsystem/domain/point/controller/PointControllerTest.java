@@ -7,6 +7,7 @@ import kongju.pointsystem.domain.point.dto.PointEarnResponse;
 import kongju.pointsystem.domain.point.dto.PointRequest;
 import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.error.ErrorCode;
+import kongju.pointsystem.global.error.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 
 import static org.mockito.ArgumentMatchers.any;
@@ -62,7 +62,7 @@ public class PointControllerTest {
     @Test
     @DisplayName("POST /api/v1/points/earn - 실패 : 잘못된 요청 금액")
     void earn_fail_invalid_amount() throws Exception {
-        ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
 
         PointRequest request = new PointRequest(UUID.randomUUID(), -1000L);
 
@@ -74,6 +74,27 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error.code").value("G001"))
                 .andExpect(jsonPath("$.error.message").value("{valid.point.positive}"));
+
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/points/earn - 실패 : User가 존재하지 않는 경우")
+    void earn_fail_not_found_user() throws Exception {
+        ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
+
+        PointRequest request = new PointRequest(UUID.randomUUID(), 10L);
+
+        when(pointService.earnPoint(any(PointRequest.class)))
+                .thenThrow(new BusinessException(errorCode));
+
+        mockMvc.perform(post("/api/v1/points/earn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
+                .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
 
     }
 }
