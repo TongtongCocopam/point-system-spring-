@@ -4,10 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kongju.pointsystem.domain.point.dto.PointBalanceExpireResponse;
-import kongju.pointsystem.domain.point.dto.PointBalanceRequest;
-import kongju.pointsystem.domain.point.dto.PointEarnResponse;
-import kongju.pointsystem.domain.point.dto.PointRequest;
+import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.error.ErrorCode;
 import kongju.pointsystem.global.error.exception.BusinessException;
@@ -22,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -103,7 +101,7 @@ public class PointControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/points/balance - 조회 성공")
+    @DisplayName("GET /api/v1/points/balance - 조회 성공: 만료 예정 시간 있음")
     void balance_success() throws Exception {
         LocalDateTime time = LocalDateTime.now().plusMonths(1);
         PointBalanceExpireResponse response = PointBalanceExpireResponse.builder()
@@ -115,12 +113,32 @@ public class PointControllerTest {
 
         mockMvc.perform(get("/api/v1/points/balance")
                         .param("id", UUID.randomUUID().toString())
+                        .param("time", time.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data['잔액']").value(1000))
                 .andExpect(jsonPath("$.data['만료 예정일']").exists());
     }
+
+    @Test
+    @DisplayName("GET /api/v1/points/balance - 조회 성공 : 만료 예정 시간 없이")
+    void balance_success_expriredAt() throws Exception {
+        LocalDateTime time = LocalDateTime.now().plusMonths(1);
+        PointBalanceResponse response = PointBalanceResponse.builder()
+                .balance(1000L)
+                .build();
+
+        when(pointService.balancePoint(any())).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/points/balance")
+                        .param("id", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data['잔액']").value(1000));
+    }
+
 
     @Test
     @DisplayName("GET /api/v1/points/balance - 실패 : User가 존재하지 않는 경우")
