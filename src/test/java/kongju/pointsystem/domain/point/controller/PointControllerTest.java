@@ -246,4 +246,25 @@ public class PointControllerTest {
 
     }
 
+    @Test
+    @DisplayName("POST /api/v1/points/refund - 실패 : User가 존재하지 않는 경우")
+    void refund_fail_not_found_user() throws Exception {
+        ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
+
+        RefundRequest request = new RefundRequest(UUID.randomUUID(), UUID.randomUUID());
+
+        when(pointService.refundPoint(any(RefundRequest.class)))
+                .thenThrow(new UserNotFoundException());
+
+        mockMvc.perform(post("/api/v1/points/refund")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
+                .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
+
+    }
+
 }
