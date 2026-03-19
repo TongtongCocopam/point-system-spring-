@@ -9,6 +9,7 @@ import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.error.ErrorCode;
 import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 import kongju.pointsystem.global.error.exception.BusinessException;
+import kongju.pointsystem.global.error.exception.RefundReferenceIdNotExsistException;
 import kongju.pointsystem.global.error.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -282,6 +283,27 @@ public class PointControllerTest {
 
         when(pointService.refundPoint(any(RefundRequest.class)))
                 .thenThrow(new UserNotFoundException());
+
+        mockMvc.perform(post("/api/v1/points/refund")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
+                .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
+
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/points/refund - 실패 : referenceId가 유효하지 않은 경우")
+    void refund_fail_invalid_referenceId() throws Exception {
+        ErrorCode errorCode = ErrorCode.REFUND_NOT_EXSIST_REFERENCEID;
+
+        RefundRequest request = new RefundRequest(UUID.randomUUID(), UUID.randomUUID());
+
+        when(pointService.refundPoint(any(RefundRequest.class)))
+                .thenThrow(new RefundReferenceIdNotExsistException());
 
         mockMvc.perform(post("/api/v1/points/refund")
                         .contentType(MediaType.APPLICATION_JSON)
