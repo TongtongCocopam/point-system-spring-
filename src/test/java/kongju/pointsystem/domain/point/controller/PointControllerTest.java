@@ -158,4 +158,29 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
 
     }
+
+    @Test
+    @DisplayName("POST /api/v1/points/use - 사용 성공 : 잔액이 충분할 경우")
+    void use_success() throws Exception {
+        UUID userId = UUID.randomUUID();
+        PointRequest request = new PointRequest(userId, 1000L);
+
+        PointUseResponse response = PointUseResponse.builder()
+                .useAmount(1000L)
+                .currentBalance(2000L)
+                .build();
+
+        when(pointService.usePoint(any(PointRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/points/use")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data['사용 금액']").value(1000))
+                .andExpect(jsonPath("$.data['현재 잔액']").value(2000))
+                .andExpect(jsonPath("$.error").isEmpty());
+    }
+
+
 }
