@@ -5,11 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-
 import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.point.entity.PointType;
 import kongju.pointsystem.domain.point.entity.PointUsage;
-import kongju.pointsystem.domain.user.entity.UserBalance;
 import kongju.pointsystem.global.error.exception.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
