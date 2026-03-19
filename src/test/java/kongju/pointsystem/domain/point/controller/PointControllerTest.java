@@ -9,6 +9,7 @@ import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.error.ErrorCode;
 import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 import kongju.pointsystem.global.error.exception.BusinessException;
+import kongju.pointsystem.global.error.exception.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +89,7 @@ public class PointControllerTest {
         PointRequest request = new PointRequest(UUID.randomUUID(), 10L);
 
         when(pointService.earnPoint(any(PointRequest.class)))
-                .thenThrow(new BusinessException(errorCode));
+                .thenThrow(new UserNotFoundException());
 
         mockMvc.perform(post("/api/v1/points/earn")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -147,7 +148,7 @@ public class PointControllerTest {
         ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
 
         when(pointService.balancePoint(any()))
-                .thenThrow(new BusinessException(errorCode));
+                .thenThrow(new UserNotFoundException());
 
         mockMvc.perform(get("/api/v1/points/balance")
                         .param("id", UUID.randomUUID().toString())
@@ -216,6 +217,28 @@ public class PointControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
+                .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
+
+    }
+
+
+    @Test
+    @DisplayName("POST /api/v1/points/use - 실패 : User가 존재하지 않는 경우")
+    void use_fail_not_found_user() throws Exception {
+        ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
+
+        PointRequest request = new PointRequest(UUID.randomUUID(), 10L);
+
+        when(pointService.usePoint(any(PointRequest.class)))
+                .thenThrow(new UserNotFoundException());
+
+        mockMvc.perform(post("/api/v1/points/use")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
