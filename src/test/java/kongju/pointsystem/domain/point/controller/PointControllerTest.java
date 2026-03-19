@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.point.service.PointService;
 import kongju.pointsystem.global.error.ErrorCode;
+import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 import kongju.pointsystem.global.error.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -182,5 +183,44 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.error").isEmpty());
     }
 
+
+    @Test
+    @DisplayName("POST /api/v1/points/use - 사용 실패 : 음수 잔액 차감")
+    void use_fail_invalid_point() throws Exception {
+        UUID userId = UUID.randomUUID();
+        PointRequest request = new PointRequest(userId, -100L);
+
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
+
+        mockMvc.perform(post("/api/v1/points/use")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
+                .andExpect(jsonPath("$.error.message").value("{valid.point.positive}"));
+
+    }
+
+
+    @Test
+    @DisplayName("POST /api/v1/points/use - 사용 실패 : 잔액 부족 -1")
+    void use_fail_not_enough_balance() throws Exception {
+        UUID userId = UUID.randomUUID();
+        PointRequest request = new PointRequest(userId, 100L);
+
+        ErrorCode errorCode = ErrorCode.BALANCE_NOT_ENOUGH;
+        when(pointService.usePoint(any(PointRequest.class))).thenThrow(new BalanceNotEnoughException());
+        mockMvc.perform(post("/api/v1/points/use")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
+                .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
+
+    }
 
 }
