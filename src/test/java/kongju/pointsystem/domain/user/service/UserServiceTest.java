@@ -73,7 +73,26 @@ public class UserServiceTest {
             userService.createUser(request);
         });
 
-        assertThat(exception.getErrorCode()).isEqualTo(errorCode.getCode());
+        assertThat(exception.getMessage()).isEqualTo(errorCode.getMessage());
+    }
+
+
+    @Test
+    @DisplayName("이메일이 중복될 때")
+    void should_register_fail_when_duplicated_email() {
+        UserCreateRequest request = UserCreateRequest.builder()
+                .email("test@gmail.com")
+                .name("tester")
+                .password("test1234")
+                .build();
+
+        ErrorCode errorCode = ErrorCode.DUPLICATE_DATA;
+
+        when(userRepository.existsByEmail(request.email())).thenReturn(true);
+        EmailDuplicatedException exception = assertThrows(EmailDuplicatedException.class, () -> {
+            userService.createUser(request);
+        });
+
         assertThat(exception.getMessage()).isEqualTo(errorCode.getMessage());
     }
 
