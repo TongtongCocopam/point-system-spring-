@@ -3,6 +3,7 @@ package kongju.pointsystem.domain.point.controller;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kongju.pointsystem.domain.point.dto.PointBalanceRequest;
 import kongju.pointsystem.domain.point.dto.PointEarnResponse;
 import kongju.pointsystem.domain.point.dto.PointRequest;
 import kongju.pointsystem.domain.point.service.PointService;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -90,6 +92,25 @@ public class PointControllerTest {
         mockMvc.perform(post("/api/v1/points/earn")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.error.code").value(errorCode.getCode()))
+                .andExpect(jsonPath("$.error.message").value(errorCode.getMessage()));
+
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/points/balance - 실패 : User가 존재하지 않는 경우")
+    void balance_fail_not_found_user() throws Exception {
+        ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
+
+        when(pointService.balancePoint(any()))
+                .thenThrow(new BusinessException(errorCode));
+
+        mockMvc.perform(get("/api/v1/points/balance")
+                        .param("id", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.data").isEmpty())
