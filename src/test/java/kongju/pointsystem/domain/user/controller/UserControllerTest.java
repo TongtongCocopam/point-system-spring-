@@ -1,6 +1,5 @@
 package kongju.pointsystem.domain.user.controller;
 
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +35,6 @@ public class UserControllerTest {
     private UserService userService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-
 
     @Test
     @DisplayName("POST /api/v1/users/register - 가입 성공")
