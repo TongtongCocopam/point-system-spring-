@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.LockModeType;
+import kongju.pointsystem.domain.point.entity.PointType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import kongju.pointsystem.domain.point.entity.PointDetail;
@@ -36,5 +37,18 @@ public interface PointDetailRepository extends JpaRepository<PointDetail, UUID> 
     List<PointDetail> findRemainedDetailsNotExpired(
             @Param("userId") UUID userId,
             @Param("now") LocalDateTime now
+    );
+
+    @Query("SELECT pd FROM PointDetail pd " +
+            "WHERE pd.expiredAt <= :now " +
+            "AND NOT EXISTS (" +
+            "    SELECT pu FROM PointUsage pu " +
+            "    WHERE pu.pointDetail = pd " +
+            "    AND pu.pointHistory.type = :type " +
+            "    AND pd.remainAmount > 0" +
+            ")")
+    List<PointDetail> findRemainedDetailsExpired(
+            @Param("now") LocalDateTime now,
+            @Param("type") PointType type
     );
 }
