@@ -264,7 +264,7 @@ public class PointService {
         Map<User, Long> userExpireTotal = new HashMap<>();
 
         for (PointDetail pointDetail : pointDetailList) {
-            Long remainedAmount = pointDetail.getAmount();
+            Long remainedAmount = pointDetail.getRemainAmount();
             if (remainedAmount <= 0) {
                 continue;
             }

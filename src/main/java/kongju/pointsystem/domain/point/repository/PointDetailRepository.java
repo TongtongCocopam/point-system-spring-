@@ -44,7 +44,8 @@ public interface PointDetailRepository extends JpaRepository<PointDetail, UUID> 
             "AND NOT EXISTS (" +
             "    SELECT pu FROM PointUsage pu " +
             "    WHERE pu.pointDetail = pd " +
-            "    AND pu.pointHistory.type = :type" +
+            "    AND pu.pointHistory.type = :type " +
+            "    AND pd.remainAmount > 0" +
             ")")
     List<PointDetail> findRemainedDetailsExpired(
             @Param("now") LocalDateTime now,
