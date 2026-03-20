@@ -1,9 +1,7 @@
 package kongju.pointsystem.domain.point.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -131,7 +129,7 @@ public class PointService {
         UUID userId = request.id();
         Long point = request.point();
 
-        if(point <= 0) throw new InvalidPointAmountException();
+        if (point <= 0) throw new InvalidPointAmountException();
 
         // 유저 확인
         User user = findByIdOrThrow(userId);
@@ -254,4 +252,52 @@ public class PointService {
                 .build();
     }
 
+    public void expirePoint() {
+        // 만료 기록이 없는데 만료 일자가 지난 detail을 불러온다
+        List<PointDetail> pointDetailList = pointDetailRepository.findRemainedDetailsExpired(LocalDateTime.now(), PointType.EXPIRE);
+
+        // detail의 remainAmount를 0으로 차감
+        List<PointHistory> pointHistories = new ArrayList<>();
+        List<PointUsage> pointUsages = new ArrayList<>();
+
+        // 사용자별 만료 총액
+        Map<User, Long> userExpireTotal = new HashMap<>();
+
+        for (PointDetail pointDetail : pointDetailList) {
+            Long remainedAmount = pointDetail.getAmount();
+            if (remainedAmount <= 0) {
+                continue;
+            }
+
+            User user = pointDetail.getUser();
+            pointDetail.use(remainedAmount);
+
+            // 총 금액 합산
+            userExpireTotal.put(user, userExpireTotal.getOrDefault(user, 0L) + remainedAmount);
+
+            PointHistory pointHistory = PointHistory.builder()
+                    .user(pointDetail.getUser())
+                    .type(PointType.EXPIRE)
+                    .amount(remainedAmount)
+                    .build();
+            pointHistories.add(pointHistory);
+
+            PointUsage pointUsage = PointUsage.builder()
+                    .pointDetail(pointDetail)
+                    .amount(remainedAmount)
+                    .pointHistory(pointHistory)
+                    .build();
+            pointUsages.add(pointUsage);
+        }
+
+        for(User user : userExpireTotal.keySet()) {
+            Long totalExpire = userExpireTotal.get(user);
+            user.getUserBalance().use(totalExpire);
+        }
+
+        // history에 만료로 기록한다
+        pointHistoryRepository.saveAll(pointHistories);
+        // usage에 연결 테이블을 추가한다
+        pointUsageRepository.saveAll(pointUsages);
+    }
 }
