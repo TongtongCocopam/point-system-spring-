@@ -20,11 +20,9 @@ import kongju.pointsystem.domain.point.repository.*;
 @Transactional
 public class PointService {
 
-    private final UserBalanceRepository balanceRepository;
     private final UserRepository userRepository;
     private final PointDetailRepository pointDetailRepository;
     private final PointHistoryRepository pointHistoryRepository;
-    private final UserBalanceRepository userBalanceRepository;
     private final PointUsageRepository pointUsageRepository;
 
     /**
