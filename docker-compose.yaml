@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: point-postgres
+
+    environment:
+      POSTGRES_DB: point_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - point-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  point-postgres-data:
