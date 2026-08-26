@@ -27,7 +27,6 @@ public interface PointDetailRepository extends JpaRepository<PointDetail, UUID> 
             @Param("time") LocalDateTime time
     );
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT pd FROM PointDetail pd " +
             "WHERE pd.user.id = :userId " +
             "and pd.expiredAt > :now " +
