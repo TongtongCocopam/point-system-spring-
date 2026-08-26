@@ -1,12 +1,12 @@
 package kongju.pointsystem.domain.user.entity;
 
-import jakarta.persistence.*;
-import kongju.pointsystem.domain.user.dto.UserCreateRequest;
-import lombok.Builder;
+import java.util.UUID;
+
 import lombok.Getter;
+import lombok.Builder;
+import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
 
 @Entity
 @Getter
