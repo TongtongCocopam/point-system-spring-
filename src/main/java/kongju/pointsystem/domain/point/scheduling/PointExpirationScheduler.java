@@ -8,7 +8,7 @@ import kongju.pointsystem.domain.point.service.PointService;
 
 @Component
 @RequiredArgsConstructor
-public class PointExpirationSchedulaer {
+public class PointExpirationScheduler {
     private final PointService pointService;
 
     @Scheduled(cron = "0 0 0 * * *")
