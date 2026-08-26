@@ -17,7 +17,8 @@ public enum ErrorCode {
     DUPLICATE_DATA(HttpStatus.BAD_REQUEST, "D002", "이미 사용 중인 정보입니다"),
     DATA_CONFLICT(HttpStatus.INTERNAL_SERVER_ERROR, "D003", "서버 점검 중입니다"),
     UNKNOWN_DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "D004", "서버 점검 중입니다"),
-    INVALID_INPUT(HttpStatus.BAD_REQUEST, "G001", null);
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "G001", null),
+    USER_BALANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "P007", "UserBalance를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
