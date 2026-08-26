@@ -10,6 +10,8 @@ import kongju.pointsystem.global.error.exception.EmptyFieldException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -58,22 +60,39 @@ public class UserServiceTest {
 
     }
 
-    @Test
-    @DisplayName("필수 필드가 비었을 때")
-    void should_register_fail_when_field_empty() {
+    @ParameterizedTest
+    @CsvSource(
+            value = {
+                    "NULL, tester, test1234",
+                    "test@gmail.com, NULL, test1234",
+                    "test@gmail.com, tester, NULL",
+                    "'', tester, test1234",
+                    "test@gmail.com, '', test1234",
+                    "test@gmail.com, tester, ''",
+                    "'   ', tester, test1234",
+                    "test@gmail.com, '   ', test1234",
+                    "test@gmail.com, tester, '   '"
+            },
+            nullValues = "NULL"
+    )
+    @DisplayName("필수 필드가 null 또는 공백이면 회원가입 실패")
+    void should_register_fail_when_field_empty(
+            String email,
+            String name,
+            String password
+    ) {
         UserCreateRequest request = UserCreateRequest.builder()
-                .email("test@gmail.com")
-                .name(null)
-                .password("test1234")
+                .email(email)
+                .name(name)
+                .password(password)
                 .build();
 
-        ErrorCode errorCode = ErrorCode.EMPTY_FIELD;
+        EmptyFieldException exception = assertThrows(
+                EmptyFieldException.class,
+                () -> userService.createUser(request)
+        );
 
-        EmptyFieldException exception = assertThrows(EmptyFieldException.class, () -> {
-            userService.createUser(request);
-        });
-
-        assertThat(exception.getMessage()).isEqualTo(errorCode.getMessage());
+        assertThat(exception.getMessage()).isEqualTo(ErrorCode.EMPTY_FIELD.getMessage());
     }
 
 
