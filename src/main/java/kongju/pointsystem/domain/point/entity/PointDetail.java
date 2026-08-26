@@ -1,13 +1,15 @@
 package kongju.pointsystem.domain.point.entity;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
+import java.util.List;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
-import kongju.pointsystem.domain.user.entity.User;
 import lombok.*;
+import jakarta.persistence.*;
+
+import kongju.pointsystem.domain.user.entity.User;
 
 
 @Entity
@@ -35,8 +37,10 @@ public class PointDetail {
         this.amount = amount;
         this.remainAmount = amount;
         this.user = user;
-        this.expiredAt = LocalDateTime.now().plusMonths(1);
-
+        this.expiredAt = LocalDate.now()
+                .plusMonths(1)
+                .plusDays(1)
+                .atStartOfDay();
     }
 
     public Long use(Long point) {
