@@ -4,6 +4,7 @@ import java.util.UUID;
 import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
+import kongju.pointsystem.domain.user.entity.User;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,10 +14,12 @@ import kongju.pointsystem.domain.user.entity.UserBalance;
 
 
 public interface UserBalanceRepository extends JpaRepository<UserBalance, UUID> {
-    UserBalance findByUserId(UUID userId);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select b from UserBalance b where b.user.id = :userId")
+    @Query("""
+            select b from UserBalance b
+            join fetch b.user
+            where b.user.id = :userId""")
     Optional<UserBalance> findByUserIdWithLock(@Param("userId") UUID userId);
 
+    UUID user(User user);
 }
