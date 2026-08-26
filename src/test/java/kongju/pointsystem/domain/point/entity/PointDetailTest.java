@@ -1,5 +1,6 @@
 package kongju.pointsystem.domain.point.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ public class PointDetailTest {
 
     @Test
     @DisplayName("생성 시 만료일이 1달 뒤로 설정됨")
-    void should_set_expiredAt_to_one_month_later_on_creation() {
+    void should_set_expiredAt_to_start_of_day_after_one_month() {
         User user = UserFixture.create();
 
         PointDetail pointDetail = PointDetail.builder()
@@ -51,9 +52,12 @@ public class PointDetailTest {
                 .build();
 
         // 만료 시간
-        LocalDateTime expectedTime = LocalDateTime.now().plusMonths(1);
-        assertThat(pointDetail.getExpiredAt()).isAfterOrEqualTo(expectedTime.minusSeconds(5));
-        assertThat(pointDetail.getExpiredAt()).isBeforeOrEqualTo(expectedTime.plusSeconds(5));
+        LocalDateTime expectedTime = LocalDate.now()
+                .plusMonths(1)
+                .plusDays(1)
+                .atStartOfDay();
+
+        assertThat(pointDetail.getExpiredAt()).isEqualTo(expectedTime);
     }
 
     @Test
