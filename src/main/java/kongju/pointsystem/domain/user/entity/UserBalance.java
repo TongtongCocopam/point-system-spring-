@@ -1,12 +1,12 @@
 package kongju.pointsystem.domain.user.entity;
 
-import jakarta.persistence.*;
+import java.util.UUID;
+
 import lombok.*;
+import jakarta.persistence.*;
 
 import kongju.pointsystem.global.error.exception.BalanceNotEnoughException;
 
-
-import java.util.UUID;
 
 @Entity
 @Getter

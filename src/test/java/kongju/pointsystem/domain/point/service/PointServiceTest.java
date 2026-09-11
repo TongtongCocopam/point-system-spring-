@@ -1,40 +1,42 @@
 package kongju.pointsystem.domain.point.service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.awt.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.Optional;
+import java.time.LocalDate;
+import java.util.concurrent.*;
+import java.time.LocalDateTime;
+
+import org.mockito.Mock;
+import org.mockito.InjectMocks;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import kongju.pointsystem.domain.point.dto.*;
 import kongju.pointsystem.domain.point.entity.PointType;
 import kongju.pointsystem.domain.point.entity.PointUsage;
 import kongju.pointsystem.domain.user.entity.UserBalance;
 import kongju.pointsystem.global.error.exception.*;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
 
+import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
-import kongju.pointsystem.domain.user.entity.User;
 import kongju.pointsystem.support.UserFixture;
-import kongju.pointsystem.domain.point.repository.PointDetailRepository;
-import kongju.pointsystem.domain.user.repository.UserRepository;
+import kongju.pointsystem.domain.user.entity.User;
 import kongju.pointsystem.domain.point.entity.PointDetail;
 import kongju.pointsystem.domain.point.entity.PointHistory;
-import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
+import kongju.pointsystem.domain.user.repository.UserRepository;
 import kongju.pointsystem.domain.point.repository.PointUsageRepository;
 import kongju.pointsystem.domain.user.repository.UserBalanceRepository;
-import org.springframework.test.util.ReflectionTestUtils;
+import kongju.pointsystem.domain.point.repository.PointDetailRepository;
+import kongju.pointsystem.domain.point.repository.PointHistoryRepository;
 
 
 @ExtendWith(MockitoExtension.class)
