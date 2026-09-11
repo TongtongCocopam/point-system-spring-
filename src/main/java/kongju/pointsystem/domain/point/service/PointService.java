@@ -1,15 +1,16 @@
 package kongju.pointsystem.domain.point.service;
 
-import java.time.LocalDateTime;
 import java.util.*;
+import java.time.LocalDateTime;
 
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import kongju.pointsystem.domain.point.entity.*;
-import kongju.pointsystem.domain.user.entity.*;
 import kongju.pointsystem.domain.point.dto.*;
+import kongju.pointsystem.domain.user.entity.*;
+import kongju.pointsystem.domain.point.entity.*;
 import kongju.pointsystem.global.error.exception.*;
 import kongju.pointsystem.domain.user.repository.*;
 import kongju.pointsystem.domain.point.repository.*;
@@ -17,15 +18,14 @@ import kongju.pointsystem.domain.point.repository.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PointService {
 
-    private final UserBalanceRepository balanceRepository;
     private final UserRepository userRepository;
     private final PointDetailRepository pointDetailRepository;
     private final PointHistoryRepository pointHistoryRepository;
-    private final UserBalanceRepository userBalanceRepository;
     private final PointUsageRepository pointUsageRepository;
+    private final UserBalanceRepository userBalanceRepository;
+    private final PointExpirationProcessor pointExpirationProcessor;
 
     /**
      * 유저 찾기, 없으면 에러 처리
@@ -42,6 +42,7 @@ public class PointService {
      *
      * @param request 사용자 id와 적립할 포인트
      */
+    @Transactional
     public PointEarnResponse earnPoint(PointRequest request) {
         UUID userId = request.id();
         Long point = request.point();
@@ -49,11 +50,11 @@ public class PointService {
         if (point <= 0) {
             throw new InvalidPointAmountException();
         }
-        // id로 유저 확인
-        User user = findByIdOrThrow(userId);
 
         // 유저 발란스 가져오기
-        UserBalance userBalance = user.getUserBalance();
+        UserBalance userBalance = findBalanceForUpdate(userId);
+        // id로 유저 확인
+        User user = userBalance.getUser();
 
         // 총 금액에 추가
         userBalance.earn(point);
@@ -84,6 +85,17 @@ public class PointService {
     }
 
     /**
+     * 락 걸고 잔액 정보 가져옴
+     *
+     * @param userId 유저 아이디
+     * @return 유저발란스
+     */
+    private @NonNull UserBalance findBalanceForUpdate(UUID userId) {
+        return userBalanceRepository.findByUserIdWithLock(userId)
+                .orElseThrow(UserBalanceNotFoundException::new);
+    }
+
+    /**
      * 포인트 조회
      *
      * @param request 사용자 id, 사용자가 확인할 날짜
@@ -91,31 +103,30 @@ public class PointService {
     @Transactional(readOnly = true)
     public PointResponse balancePoint(PointBalanceRequest request) {
         UUID userId = request.id();
-        LocalDateTime time = request.time();
+        LocalDateTime expireTime = request.time();
         // id로 유저 확인
         User user = findByIdOrThrow(userId);
 
         // 유저 발란스 확인
         UserBalance userBalance = user.getUserBalance();
 
-        if (time == null) {
+        if (expireTime == null) {
             return PointBalanceResponse.builder()
                     .balance(userBalance.getTotalAmount())
                     .build();
         }
 
-        List<PointDetail> pointDetailList = pointDetailRepository.findByPointExpire(userId, time);
+        LocalDateTime now = LocalDateTime.now();
+        List<PointDetail> pointDetailList = pointDetailRepository.findExpiringPointsBetween(userId, now, expireTime);
 
         Long totalAmount = pointDetailList
                 .stream()
                 .mapToLong(PointDetail::getRemainAmount)
                 .sum();
 
-        userBalance.earn(totalAmount);
-
         return PointBalanceExpireResponse.builder()
                 .balance(totalAmount)
-                .expiredAt(time)
+                .expiredAt(expireTime)
                 .build();
     }
 
@@ -125,23 +136,24 @@ public class PointService {
      * @param request 사용할 유저 아이디, 사용할 포인트
      * @return
      */
+    @Transactional
     public PointUseResponse usePoint(PointRequest request) {
         UUID userId = request.id();
         Long point = request.point();
 
         if (point <= 0) throw new InvalidPointAmountException();
 
-        // 유저 확인
-        User user = findByIdOrThrow(userId);
+        // 잔고 확인, 락 걸기
+        UserBalance userBalance = findBalanceForUpdate(userId);
 
-        // 잔고 확인
-        UserBalance userBalance = user.getUserBalance();
-
-        userBalance.use(point);
+        User user = userBalance.getUser();
 
         // 포인트 디테일 불러오기
         LocalDateTime now = LocalDateTime.now();
         List<PointDetail> pointDetailList = pointDetailRepository.findRemainedDetailsNotExpired(userId, now);
+
+        // 포인트 차감
+        userBalance.use(point);
 
         // 포인트 차감
         UUID referenceId = UUID.randomUUID();
@@ -185,11 +197,19 @@ public class PointService {
                 .build();
     }
 
+    /**
+     * 포인트 환불
+     *
+     * @param request 유저 아이디, 환불 아이디
+     * @return 환불된 포인트
+     */
+    @Transactional
     public PointRefundResponse refundPoint(RefundRequest request) {
         UUID userId = request.id();
         UUID referenceId = request.referenceId();
         // 유저 확인
-        User user = findByIdOrThrow(userId);
+        UserBalance userBalance = findBalanceForUpdate(userId);
+        User user = userBalance.getUser();
 
         // 유효한 referenceId인지 확인
         boolean referenceIdExists = pointHistoryRepository.existsReferenceId(userId, referenceId);
@@ -241,7 +261,6 @@ public class PointService {
         pointHistoryRepository.save(pointHistoryRefund);
 
         // 총 잔액 수정
-        UserBalance userBalance = user.getUserBalance();
         userBalance.refund(refundAmount);
 
         return PointRefundResponse.builder()
@@ -252,52 +271,16 @@ public class PointService {
                 .build();
     }
 
+    /**
+     * 포인트 만료
+     */
     public void expirePoint() {
-        // 만료 기록이 없는데 만료 일자가 지난 detail을 불러온다
-        List<PointDetail> pointDetailList = pointDetailRepository.findRemainedDetailsExpired(LocalDateTime.now(), PointType.EXPIRE);
+        // 만료 대상 user목록 조회
+        LocalDateTime now = LocalDateTime.now();
+        List<UUID> userIds = pointDetailRepository.findUsersWithExpiredPoints(now);
 
-        // detail의 remainAmount를 0으로 차감
-        List<PointHistory> pointHistories = new ArrayList<>();
-        List<PointUsage> pointUsages = new ArrayList<>();
-
-        // 사용자별 만료 총액
-        Map<User, Long> userExpireTotal = new HashMap<>();
-
-        for (PointDetail pointDetail : pointDetailList) {
-            Long remainedAmount = pointDetail.getRemainAmount();
-            if (remainedAmount <= 0) {
-                continue;
-            }
-
-            User user = pointDetail.getUser();
-            pointDetail.use(remainedAmount);
-
-            // 총 금액 합산
-            userExpireTotal.put(user, userExpireTotal.getOrDefault(user, 0L) + remainedAmount);
-
-            PointHistory pointHistory = PointHistory.builder()
-                    .user(pointDetail.getUser())
-                    .type(PointType.EXPIRE)
-                    .amount(remainedAmount)
-                    .build();
-            pointHistories.add(pointHistory);
-
-            PointUsage pointUsage = PointUsage.builder()
-                    .pointDetail(pointDetail)
-                    .amount(remainedAmount)
-                    .pointHistory(pointHistory)
-                    .build();
-            pointUsages.add(pointUsage);
-        }
-
-        for(User user : userExpireTotal.keySet()) {
-            Long totalExpire = userExpireTotal.get(user);
-            user.getUserBalance().use(totalExpire);
-        }
-
-        // history에 만료로 기록한다
-        pointHistoryRepository.saveAll(pointHistories);
-        // usage에 연결 테이블을 추가한다
-        pointUsageRepository.saveAll(pointUsages);
+        userIds.forEach(userId -> {
+            pointExpirationProcessor.expireUserPoints(userId, now);
+        });
     }
 }

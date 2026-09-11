@@ -5,7 +5,6 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.UncategorizedDataAccessException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -23,8 +22,9 @@ public class GlobalExceptionHandler {
 
     /**
      * 커스텀 클래스 에러 처리 핸들러
-     * @param e
-     * @return
+     *
+     * @param e 에러 정보
+     * @return 실패응답
      */
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
@@ -38,8 +38,9 @@ public class GlobalExceptionHandler {
 
     /**
      * 예상치 못한 에러 처리 핸들러
-     * @param e
-     * @return
+     *
+     * @param e 에러 정보
+     * @return 실패응답
      */
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
@@ -52,8 +53,9 @@ public class GlobalExceptionHandler {
 
     /**
      * DB 연결 끊김/타임아웃
-     * @param e
-     * @return
+     *
+     * @param e 에러 정보
+     * @return 실패응답
      */
     @ExceptionHandler(DataAccessResourceFailureException.class)
     protected ResponseEntity<ApiResponse<Void>> handleDataAccessResourceFailureException(DataAccessResourceFailureException e) {
@@ -66,8 +68,9 @@ public class GlobalExceptionHandler {
 
     /**
      * DB 제약 조건 위반
-     * @param e
-     * @return
+     *
+     * @param e 에러 정보
+     * @return 실패응답
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
@@ -80,8 +83,9 @@ public class GlobalExceptionHandler {
 
     /**
      * DB 데이터 충돌
-     * @param e
-     * @return
+     *
+     * @param e 에러 정보
+     * @return 실패응답
      */
     @ExceptionHandler(OptimisticLockingFailureException.class)
     protected ResponseEntity<ApiResponse<Void>> handleOptimisticLockingFailureException(OptimisticLockingFailureException e) {
@@ -94,8 +98,9 @@ public class GlobalExceptionHandler {
 
     /**
      * DB알 수 없는 오류
-     * @param e
-     * @return
+     *
+     * @param e 에러 정보
+     * @return 실패응답
      */
     @ExceptionHandler(UncategorizedDataAccessException.class)
     protected ResponseEntity<ApiResponse<Void>> handleUncategorizedDataAccessException(UncategorizedDataAccessException e) {
@@ -108,8 +113,9 @@ public class GlobalExceptionHandler {
 
     /**
      * valid 검증 오류
-     * @param e
-     * @return
+     *
+     * @param e 에러 정보
+     * @return 실패응답
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
